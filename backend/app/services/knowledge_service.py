@@ -58,9 +58,9 @@ def build_why_identified(
     )
 
     return (
-        f"The model detected {qualifier} {display_name} in the "
+        f"Visual analysis identified {qualifier} {display_name} in the "
         f"{region_name.replace('_', ' ')} region "
         f"(confidence: {confidence_pct}%). "
-        f"This is based on visual pattern recognition and does not "
+        f"This is based on surface visual pattern characteristics and does not "
         f"constitute a medical diagnosis."
     )

@@ -40,7 +40,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       }}>
         <div className="pill-badge pill-terracotta" style={{ marginBottom: 18 }}>
           <SparklesIcon size={14} />
-          Evidence-Based Visual Analysis &bull; EfficientNet-B0 + Grad-CAM
+          Evidence-Based Visual Analysis &bull; Precision Facial Mapping
         </div>
 
         <h1 className="hero-h1" style={{
@@ -66,7 +66,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           margin: '0 auto 34px',
           lineHeight: 1.6,
         }}>
-          DermaLens couples high-resolution multi-view facial landmarking with deep visual pattern recognition and Grad-CAM activation maps, grounded in curated dermatological literature.
+          DermaLens couples high-resolution multi-view facial landmarking with deep visual pattern recognition and interactive focus heatmaps, grounded in curated dermatological literature.
         </p>
 
         <div className="hero-cta-group" style={{
@@ -157,9 +157,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
           }}>
             <SparklesIcon size={22} />
           </div>
-          <h4 style={{ fontSize: 17, marginBottom: 8 }}>5-Region Landmark Extraction</h4>
+          <h4 style={{ fontSize: 17, marginBottom: 8 }}>5-Region Facial Mapping</h4>
           <p style={{ fontSize: 13.5, color: 'var(--color-muted)', lineHeight: 1.55 }}>
-            MediaPipe face mesh crops Forehead, Cheeks, Nose, and Chin regions for targeted prototype evaluation.
+            Precision facial mesh mapping isolates Forehead, Cheeks, Nose, and Chin regions for targeted surface evaluation.
           </p>
         </div>
 
@@ -177,9 +177,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
           }}>
             <EyeIcon size={22} />
           </div>
-          <h4 style={{ fontSize: 17, marginBottom: 8 }}>Explainable AI (Grad-CAM)</h4>
+          <h4 style={{ fontSize: 17, marginBottom: 8 }}>Visual Focus Heatmaps</h4>
           <p style={{ fontSize: 13.5, color: 'var(--color-muted)', lineHeight: 1.55 }}>
-            Gradient-weighted activation heatmaps reveal the exact pixel regions that stimulated the model prediction.
+            Interactive focus heatmaps highlight the specific skin areas evaluated during your assessment.
           </p>
         </div>
 
@@ -209,7 +209,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <div style={{ textAlign: 'center', marginBottom: 30 }}>
           <h3 style={{ fontSize: 28, marginBottom: 8 }}>8 Evaluated Concern Patterns</h3>
           <p style={{ fontSize: 15, color: 'var(--color-muted)' }}>
-            Dataset A trained single-label visual pattern classifier (92.89% validation split accuracy)
+            Comprehensive dermatological analysis across 8 visible facial skin characteristics
           </p>
         </div>
 

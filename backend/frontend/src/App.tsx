@@ -128,10 +128,10 @@ export const App: React.FC = () => {
       }}>
         <div style={{ maxWidth: 1140, margin: '0 auto' }}>
           <div>
-            <strong>DermaLens</strong> &mdash; Face Skin Assessment System &bull; College Engineering Mini-Project
+            <strong>DermaLens</strong> &mdash; Facial Skin Assessment Platform &bull; Informational Wellness Tool
           </div>
           <div style={{ marginTop: 4, fontSize: 12 }}>
-            EfficientNet-B0 visual classifier (92.89% validation split benchmark) with Grad-CAM Explainable AI &bull; Not a medical diagnostic device
+            AI-Powered Surface Pattern Analysis &bull; Not a medical diagnostic device. Always consult a board-certified dermatologist for clinical concerns.
           </div>
         </div>
       </footer>

@@ -102,7 +102,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
 
             <p style={{ fontSize: 13, color: 'var(--color-muted)', lineHeight: 1.55 }}>
               {results.skin_type?.note || (
-                'Skin type classification requires a separate validated skin-type dataset. Our model focuses strictly on 8 visible pattern concern classes.'
+                'Skin type determination requires physical sebum measurement and barrier evaluation. DermaLens focuses on 8 visible surface skin patterns.'
               )}
             </p>
           </div>
@@ -152,7 +152,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
                     {confidence !== null && (
                       <div style={{ textAlign: 'right' }}>
                         <span className="pill-badge pill-terracotta" style={{ fontSize: 11 }}>
-                          {confidence}% Conf.
+                          {confidence}% Match
                         </span>
                       </div>
                     )}
@@ -171,7 +171,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <EyeIcon size={18} color="var(--color-terracotta)" />
                 <h4 style={{ fontSize: 17, fontWeight: 700 }}>
-                  Explainable AI (Grad-CAM)
+                  Visual Focus Analysis
                 </h4>
               </div>
 
@@ -224,18 +224,18 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
               {activeXai?.overlay_base64 ? (
                 <img
                   src={`data:image/png;base64,${xaiMode === 'overlay' ? activeXai.overlay_base64 : activeXai.heatmap_base64}`}
-                  alt="Grad-CAM visualization"
+                  alt="Visual focus heatmap"
                   style={{ width: '100%', height: '100%', objectFit: 'contain' }}
                 />
               ) : (
                 <div style={{ textAlign: 'center', padding: 20, color: '#D4C7BA', fontSize: 13 }}>
                   <InfoIcon size={24} style={{ margin: '0 auto 8px', opacity: 0.7 }} />
-                  Grad-CAM visualization for {regionDisplayNames[selectedRegion]} is generated during analysis.
+                  Visual focus heatmap for {regionDisplayNames[selectedRegion]} is generated during analysis.
                 </div>
               )}
             </div>
 
-            {/* XAI Clinical Disclaimer Note */}
+            {/* Visual Focus Clinical Disclaimer Note */}
             <div style={{
               fontSize: 12,
               color: 'var(--color-muted)',
@@ -245,7 +245,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
               backgroundColor: 'var(--color-surface-subtle)',
               border: '1px solid var(--color-border-light)',
             }}>
-              <strong>Explanation Aid Only:</strong> High-intensity regions (red/yellow) indicate image features that most strongly drove the EfficientNet-B0 prediction. This does NOT prove medical causality or disease.
+              <strong>Visual Guide Only:</strong> Highlighted regions (red/yellow) indicate key focal areas identified during visual assessment. This does not indicate medical diagnosis or causality.
             </div>
           </div>
 
@@ -253,7 +253,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
           {activeRegionData?.all_probabilities && (
             <div className="glass-panel" style={{ padding: '20px 24px', backgroundColor: '#FFFFFF' }}>
               <h5 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
-                Model Prediction Probabilities ({regionDisplayNames[selectedRegion]})
+                Evaluated Pattern Likelihood ({regionDisplayNames[selectedRegion]})
               </h5>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -306,7 +306,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
               border: '1px solid var(--color-border-light)',
             }}>
               <h5 style={{ fontSize: 15, fontWeight: 700, marginBottom: 6, color: 'var(--color-terracotta-dark)' }}>
-                1. Why Did the AI Flag This?
+                1. Why Was This Identified?
               </h5>
               <p style={{ fontSize: 13.5, color: 'var(--color-mocha)', lineHeight: 1.55 }}>
                 {concern.why_identified}
@@ -416,7 +416,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
           borderTop: '1px dashed var(--color-warning-border)',
           paddingTop: 10,
         }}>
-          <strong>Validation Split Benchmark:</strong> EfficientNet-B0 trained on Dataset A achieves 92.89% validation accuracy on the closed benchmark split. It is not an FDA-cleared diagnostic device. If you have discomfort, spreading redness, changing lesions, or pain, schedule an in-person appointment with a board-certified dermatologist.
+          <strong>Important Clinical Notice:</strong> DermaLens is an informational wellness tool and not an FDA-cleared medical diagnostic device. If you experience discomfort, persistent or spreading redness, changing lesions, or pain, please schedule an in-person appointment with a board-certified dermatologist.
         </div>
       </section>
     </div>

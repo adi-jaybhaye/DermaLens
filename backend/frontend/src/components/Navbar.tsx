@@ -79,7 +79,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               color: 'var(--color-muted)',
               marginTop: -2,
             }}>
-              AI Skin Assessment &amp; XAI
+              Intelligent Skin Assessment
             </div>
           </div>
         </div>

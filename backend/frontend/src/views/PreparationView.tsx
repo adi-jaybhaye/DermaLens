@@ -38,7 +38,7 @@ export const PreparationView: React.FC<PreparationViewProps> = ({ onProceed, onB
             Optimising Your Capture Quality
           </h2>
           <p style={{ fontSize: 15, color: 'var(--color-muted)', maxWidth: 520, margin: '0 auto' }}>
-            Our image quality gate validates resolution, lighting, and blur prior to ML execution. Follow these recommendations for best results.
+            Our automated photo check validates resolution, lighting, and clarity before starting assessment. Follow these recommendations for best results.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export const PreparationView: React.FC<PreparationViewProps> = ({ onProceed, onB
           ))}
         </div>
 
-        {/* Quality Gate Notice */}
+        {/* Photo Clarity Notice */}
         <div style={{
           padding: '16px 20px',
           borderRadius: 'var(--radius-md)',
@@ -82,7 +82,7 @@ export const PreparationView: React.FC<PreparationViewProps> = ({ onProceed, onB
             <ShieldCheckIcon size={22} />
           </div>
           <div style={{ fontSize: 13, color: 'var(--color-warning-text)', lineHeight: 1.5 }}>
-            <strong>Quality Gate Active:</strong> Images failing minimum brightness, resolution, or sharpness thresholds will be rejected automatically before ML analysis so you can recapture without noisy predictions.
+            <strong>Clarity Check Active:</strong> Photos with insufficient lighting, severe blur, or low resolution will prompt a recapture request to ensure your assessment is reliable and accurate.
           </div>
         </div>
 

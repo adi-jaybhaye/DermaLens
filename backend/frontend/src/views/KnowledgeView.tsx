@@ -29,7 +29,7 @@ export const KnowledgeView: React.FC = () => {
           Skin Concern Knowledge Base
         </h2>
         <p style={{ fontSize: 15, color: 'var(--color-muted)', maxWidth: 640, margin: '0 auto' }}>
-          Explore evidence-based summaries for each of the 8 concern classes recognized by our EfficientNet-B0 visual classifier.
+          Explore evidence-based dermatological summaries for each of the 8 facial skin characteristics evaluated by DermaLens.
         </p>
       </div>
 
@@ -73,7 +73,7 @@ export const KnowledgeView: React.FC = () => {
                   {activeConcern.display_name}
                 </h3>
                 <span className="pill-badge pill-sage" style={{ fontSize: 11 }}>
-                  Dataset A Class
+                  Evaluated Pattern
                 </span>
               </div>
 

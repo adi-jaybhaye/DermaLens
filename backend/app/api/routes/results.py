@@ -134,9 +134,9 @@ def get_assessment_results(assessment_id: str):
     skin_type = {
         "status": "unavailable",
         "note": (
-            "Skin type classification requires a validated "
-            "skin-type dataset and model. This feature will "
-            "be available in a future update."
+            "Skin type determination requires physical sebum "
+            "measurement and barrier evaluation. DermaLens focuses on "
+            "8 visible surface skin patterns."
         ),
     }
 

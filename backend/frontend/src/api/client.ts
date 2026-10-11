@@ -273,8 +273,8 @@ export const api = {
       body: formData,
     });
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: 'Grad-CAM failed' }));
-      throw new Error(err.detail || 'Grad-CAM computation failed');
+      const err = await res.json().catch(() => ({ detail: 'Visual analysis heatmap generation failed' }));
+      throw new Error(err.detail || 'Visual analysis heatmap generation failed');
     }
     return res.json();
   },

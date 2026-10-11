@@ -538,8 +538,8 @@ SAFETY_DISCLAIMER = {
     "disclaimer": (
         "This assessment is for informational and educational purposes "
         "only. It does not constitute medical advice, diagnosis, or "
-        "treatment. The AI model identifies visible patterns in images "
-        "and does not determine medical causes. Results should not "
+        "treatment. The visual analysis identifies surface patterns in images "
+        "and does not determine clinical causes. Results should not "
         "replace professional dermatological consultation."
     ),
     "model_info": {

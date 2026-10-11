@@ -13,12 +13,12 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, onSuc
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const steps = [
-    'Image Quality Gate (Blur, Lighting, Resolution)',
-    'MediaPipe Face & 468-Landmark Detection',
-    'Extracting 5 Facial Regions (Forehead, Cheeks, Nose, Chin)',
-    'EfficientNet-B0 Visual Pattern Recognition',
-    'Generating Grad-CAM Explainable AI Heatmaps',
-    'Synthesizing Dermatological Knowledge & Citations',
+    'Checking Photo Clarity, Lighting & Resolution',
+    'Detecting Facial Contours & Alignment Landmarks',
+    'Mapping 5 Facial Zones (Forehead, Cheeks, Nose, Chin)',
+    'Analyzing Skin Surface Patterns & Textures',
+    'Generating Visual Focus Heatmaps',
+    'Synthesizing Dermatological Insights & Evidence',
   ];
 
   useEffect(() => {
@@ -86,7 +86,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, onSuc
             </div>
 
             <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>
-              Quality Gate or Pipeline Notice
+              Photo Verification Notice
             </h3>
 
             <p style={{
@@ -128,7 +128,7 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, onSuc
               Analyzing Facial Skin Features
             </h3>
             <p style={{ fontSize: 14, color: 'var(--color-muted)', marginBottom: 32 }}>
-              Executing computer vision and deep learning assessment models...
+              Performing comprehensive facial skin assessment...
             </p>
 
             {/* Stepper progress list */}
