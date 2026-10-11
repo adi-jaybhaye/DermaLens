@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 from pydantic import BaseModel, Field
 
@@ -10,13 +10,28 @@ class AssessmentCreate(BaseModel):
     """
 
     capture_type: str = Field(
-        ...,
-        description="How the assessment images were captured."
+        default="upload",
+        description="How the assessment images were captured (e.g. upload, camera, or hybrid)."
+    )
+
+    capture_modes: Optional[Dict[str, str]] = Field(
+        default=None,
+        description="Per-view capture method mapping, e.g. {'front': 'camera', 'left': 'upload'}."
     )
 
     views: List[str] = Field(
         ...,
         description="Facial views provided for the assessment."
+    )
+
+    consent_version: Optional[str] = Field(
+        default="1.0",
+        description="Version of informational assessment consent agreed to by user."
+    )
+
+    consented_at: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp when user consented to non-diagnostic informational scan."
     )
 
 
@@ -28,6 +43,9 @@ class AssessmentResponse(BaseModel):
     id: str
     status: str
     capture_type: str
+    capture_modes: Optional[Dict[str, str]] = None
     views: List[str]
+    consent_version: Optional[str] = None
+    consented_at: Optional[datetime] = None
     created_at: datetime
     updated_at: Optional[datetime] = None

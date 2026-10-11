@@ -1,7 +1,9 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config.settings import settings
+from app.config.database import init_db_indexes
 from app.api.routes.health import router as health_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.assessments import router as assessment_router
@@ -14,21 +16,44 @@ from app.api.routes.knowledge import router as knowledge_router
 from app.api.routes.sources import router as sources_router
 from app.api.routes.xai import router as xai_router
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Initialize MongoDB collections and indexes
+    init_db_indexes()
+    yield
+
+
+import logging
+from fastapi import Request, status
+from fastapi.responses import JSONResponse
+
+logger = logging.getLogger(__name__)
+
 app = FastAPI(
     title=settings.app_name,
     version="1.0.0",
     description="Backend API for the Face Skin Assessment System",
+    lifespan=lifespan,
 )
 
-# CORS — allow frontend during development and production
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        f"Unhandled server error on {request.method} {request.url.path}: {exc}",
+        exc_info=True,
+    )
+    return JSONResponse(
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={"detail": "An unexpected internal server error occurred. Please try again later."},
+    )
+
+
+# CORS — allow frontend during development and production from settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=settings.allowed_cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

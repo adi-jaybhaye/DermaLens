@@ -15,6 +15,11 @@ export const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [viewFiles, setViewFiles] = useState<Record<'front' | 'left' | 'right', File> | null>(null);
+  const [captureModes, setCaptureModes] = useState<Record<'front' | 'left' | 'right', 'camera' | 'upload'>>({
+    front: 'upload',
+    left: 'upload',
+    right: 'upload',
+  });
   const [results, setResults] = useState<AssessmentResults | null>(null);
 
   // Check auth status on load
@@ -25,6 +30,10 @@ export const App: React.FC = () => {
   }, []);
 
   const handleStartAssessment = () => {
+    if (!user) {
+      setIsAuthModalOpen(true);
+      return;
+    }
     setCurrentTab('preparation');
   };
 
@@ -32,8 +41,12 @@ export const App: React.FC = () => {
     setCurrentTab('capture');
   };
 
-  const handleCaptureComplete = (files: Record<'front' | 'left' | 'right', File>) => {
+  const handleCaptureComplete = (
+    files: Record<'front' | 'left' | 'right', File>,
+    modes: Record<'front' | 'left' | 'right', 'camera' | 'upload'>
+  ) => {
     setViewFiles(files);
+    setCaptureModes(modes);
     setCurrentTab('processing');
   };
 
@@ -97,6 +110,7 @@ export const App: React.FC = () => {
         {currentTab === 'processing' && viewFiles && (
           <ProcessingView
             viewFiles={viewFiles}
+            captureModes={captureModes}
             onSuccess={handleProcessingSuccess}
             onError={handleProcessingError}
           />

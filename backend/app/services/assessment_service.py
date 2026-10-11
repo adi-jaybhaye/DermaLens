@@ -8,18 +8,22 @@ from bson import ObjectId
 from app.config.database import database
 from app.schemas.assessment import AssessmentCreate
 from app.ml.quality.image_quality import check_image_quality
-from app.ml.face.face_processor import extract_face_regions
+from app.ml.face.face_processor import detect_face, extract_face_regions
 from app.ml.skin.skin_analyzer import analyze_skin_regions
 from app.ml.xai.gradcam import generate_gradcam
 
 
 def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
     now = datetime.now(timezone.utc)
+    consented_at = data.consented_at or now
 
     assessment_document = {
         "status": "created",
         "capture_type": data.capture_type,
+        "capture_modes": data.capture_modes or {},
         "views": data.views,
+        "consent_version": data.consent_version or "1.0",
+        "consented_at": consented_at,
         "user_id": user_id,
         "created_at": now,
         "updated_at": now,
@@ -76,26 +80,47 @@ def get_assessment_history(user_id: str = None):
 
 
 def delete_assessment(assessment_id: str, user_id: str = None) -> bool:
-    """Delete an assessment session and associated image records."""
+    """Delete an assessment session, all associated physical image files, and database records."""
     try:
         object_id = ObjectId(assessment_id)
     except Exception:
         return False
 
-    # Check ownership if user_id is provided
-    if user_id:
-        existing = database.assessment_sessions.find_one({"_id": object_id})
-        if existing and existing.get("user_id") and existing["user_id"] != user_id:
-            return False
+    existing = database.assessment_sessions.find_one({"_id": object_id})
+    if not existing:
+        return False
 
-    result = database.assessment_sessions.delete_one(
-        {"_id": object_id}
-    )
+    # Check ownership: if session has a user_id and it doesn't match, reject
+    if user_id and existing.get("user_id") and str(existing["user_id"]) != str(user_id):
+        return False
 
-    # Also remove associated image records
-    database.assessment_images.delete_many(
-        {"assessment_id": object_id}
-    )
+    # 1. Clean up physical image files from session document
+    images = existing.get("images", {})
+    for view_name, view_data in images.items():
+        file_path_str = view_data.get("file_path")
+        if file_path_str:
+            try:
+                p = Path(file_path_str)
+                if p.exists() and p.is_file():
+                    p.unlink()
+            except Exception:
+                pass
+
+    # 2. Clean up any physical files recorded in assessment_images collection
+    image_records = database.assessment_images.find({"assessment_id": object_id})
+    for img_rec in image_records:
+        rec_path_str = img_rec.get("file_path")
+        if rec_path_str:
+            try:
+                p = Path(rec_path_str)
+                if p.exists() and p.is_file():
+                    p.unlink()
+            except Exception:
+                pass
+
+    # 3. Delete database records
+    database.assessment_images.delete_many({"assessment_id": object_id})
+    result = database.assessment_sessions.delete_one({"_id": object_id})
 
     return result.deleted_count > 0
 
@@ -120,7 +145,26 @@ def process_assessment_image(
         }
 
     # --------------------------------------------------------
-    # 2. Face Detection + Facial Region Identification
+    # 2. Strict Single Face Gate (Zero or Multiple Faces Rejected)
+    # --------------------------------------------------------
+
+    face_detection = detect_face(image_bytes)
+
+    if not face_detection or not face_detection.get("success"):
+        return {
+            "success": False,
+            "stage": "face_detection",
+            "message": (
+                face_detection.get("reason", "Face detection failed")
+                if face_detection
+                else "Face detection failed"
+            ),
+            "face_count": face_detection.get("face_count", 0) if face_detection else 0,
+            "quality": quality,
+        }
+
+    # --------------------------------------------------------
+    # 3. Facial Landmark Mesh & 5-Region Extraction
     # --------------------------------------------------------
 
     face_result = extract_face_regions(image_bytes)
@@ -128,10 +172,10 @@ def process_assessment_image(
     if not face_result.get("success"):
         return {
             "success": False,
-            "stage": "face_detection",
+            "stage": "landmark_extraction",
             "message": face_result.get(
                 "reason",
-                "Face detection failed",
+                "Facial region extraction failed",
             ),
             "quality": quality,
         }

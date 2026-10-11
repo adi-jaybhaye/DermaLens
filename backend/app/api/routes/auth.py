@@ -4,6 +4,7 @@ from app.services.auth_service import (
     register_user,
     authenticate_user,
     create_access_token,
+    delete_user_account,
 )
 from app.api.deps import get_current_user
 from app.utils.rate_limiter import auth_limiter
@@ -71,5 +72,19 @@ def get_profile(current_user: dict = Depends(get_current_user)):
         id=current_user["id"],
         email=current_user["email"],
         full_name=current_user.get("full_name"),
+        consent_version=current_user.get("consent_version"),
+        consented_at=current_user.get("consented_at"),
         created_at=current_user.get("created_at"),
     )
+
+
+@router.delete("/auth/me")
+def delete_account(current_user: dict = Depends(get_current_user)):
+    """Permanently delete user account and wipe all associated biometric assessment data."""
+    result = delete_user_account(current_user["id"])
+    if not result.get("success"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=result.get("reason", "Account deletion failed"),
+        )
+    return {"message": "Account and all associated biometric records permanently deleted"}

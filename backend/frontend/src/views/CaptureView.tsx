@@ -2,7 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CameraIcon, UploadIcon, CheckCircleIcon, AlertCircleIcon, XIcon, RefreshIcon } from '../components/Icons';
 
 interface CaptureViewProps {
-  onComplete: (viewFiles: Record<'front' | 'left' | 'right', File>) => void;
+  onComplete: (
+    viewFiles: Record<'front' | 'left' | 'right', File>,
+    captureModes: Record<'front' | 'left' | 'right', 'camera' | 'upload'>
+  ) => void;
   onBack: () => void;
 }
 
@@ -10,6 +13,11 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
   const [activeView, setActiveView] = useState<'front' | 'left' | 'right'>('front');
   const [viewFiles, setViewFiles] = useState<Partial<Record<'front' | 'left' | 'right', File>>>({});
   const [viewPreviews, setViewPreviews] = useState<Partial<Record<'front' | 'left' | 'right', string>>>({});
+  const [captureModes, setCaptureModes] = useState<Record<'front' | 'left' | 'right', 'camera' | 'upload'>>({
+    front: 'upload',
+    left: 'upload',
+    right: 'upload',
+  });
   const [useCamera, setUseCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
@@ -64,6 +72,7 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
 
     canvas.toBlob((blob) => {
       if (blob) {
+        setCaptureModes((prev) => ({ ...prev, [activeView]: 'camera' }));
         const file = new File([blob], `${activeView}_capture.jpg`, { type: 'image/jpeg' });
         attachFileToView(activeView, file);
       }
@@ -73,6 +82,7 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setCaptureModes((prev) => ({ ...prev, [activeView]: 'upload' }));
       attachFileToView(activeView, file);
     }
   };
@@ -740,7 +750,7 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
           </button>
 
           <button
-            onClick={() => onComplete(viewFiles as Record<'front' | 'left' | 'right', File>)}
+            onClick={() => onComplete(viewFiles as Record<'front' | 'left' | 'right', File>, captureModes)}
             disabled={!isReadyToProceed}
             className="btn-primary"
             style={{ padding: '11px 20px', flex: 1, justifyContent: 'center' }}

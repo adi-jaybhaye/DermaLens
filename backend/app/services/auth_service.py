@@ -1,4 +1,5 @@
 from datetime import datetime, timezone, timedelta
+from pathlib import Path
 from typing import Optional, Dict, Any
 from bson import ObjectId
 import jwt
@@ -79,11 +80,14 @@ def register_user(user_data: UserCreate) -> Dict[str, Any]:
 
     hashed = hash_password(user_data.password)
     now = datetime.now(timezone.utc).isoformat()
+    consent_version = user_data.consent_version or "1.0"
 
     doc = {
         "email": email,
         "password_hash": hashed,
         "full_name": user_data.full_name,
+        "consent_version": consent_version,
+        "consented_at": now,
         "created_at": now,
         "updated_at": now,
         "is_active": True,
@@ -98,6 +102,8 @@ def register_user(user_data: UserCreate) -> Dict[str, Any]:
             "id": user_id,
             "email": email,
             "full_name": user_data.full_name,
+            "consent_version": consent_version,
+            "consented_at": now,
             "created_at": now,
         },
     }
@@ -110,6 +116,9 @@ def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
     if not user_doc:
         return None
 
+    if not user_doc.get("is_active", True):
+        return None
+
     if not verify_password(user_doc.get("password_hash", ""), password):
         return None
 
@@ -117,7 +126,10 @@ def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
         "id": str(user_doc["_id"]),
         "email": user_doc["email"],
         "full_name": user_doc.get("full_name"),
+        "consent_version": user_doc.get("consent_version"),
+        "consented_at": user_doc.get("consented_at"),
         "created_at": user_doc.get("created_at"),
+        "is_active": user_doc.get("is_active", True),
     }
 
 
@@ -128,9 +140,38 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
     user_doc = database.users.find_one({"_id": ObjectId(user_id)})
     if not user_doc:
         return None
+    if not user_doc.get("is_active", True):
+        return None
     return {
         "id": str(user_doc["_id"]),
         "email": user_doc["email"],
         "full_name": user_doc.get("full_name"),
+        "consent_version": user_doc.get("consent_version"),
+        "consented_at": user_doc.get("consented_at"),
         "created_at": user_doc.get("created_at"),
+        "is_active": user_doc.get("is_active", True),
     }
+
+
+def delete_user_account(user_id: str) -> Dict[str, Any]:
+    """Permanently delete user account and wipe all associated assessments and image files."""
+    if not ObjectId.is_valid(user_id):
+        return {"success": False, "reason": "Invalid user ID"}
+
+    user_obj_id = ObjectId(user_id)
+    user_doc = database.users.find_one({"_id": user_obj_id})
+    if not user_doc:
+        return {"success": False, "reason": "User not found"}
+
+    from app.services.assessment_service import delete_assessment
+
+    # Find and delete all assessments belonging to this user (unlinks physical files and DB records)
+    assessments = list(database.assessment_sessions.find({"user_id": str(user_id)}))
+    for assessment in assessments:
+        assessment_id = str(assessment["_id"])
+        delete_assessment(assessment_id)
+
+    # Delete user record
+    database.users.delete_one({"_id": user_obj_id})
+
+    return {"success": True, "message": "Account and all associated biometric data permanently deleted"}

@@ -7,6 +7,7 @@ class UserCreate(BaseModel):
     email: str = Field(..., description="User email address")
     password: str = Field(..., min_length=8, description="Password (min 8 characters)")
     full_name: Optional[str] = Field(None, max_length=100, description="User full name")
+    consent_version: Optional[str] = Field("1.0", description="Privacy and terms consent version")
 
     @field_validator("email")
     @classmethod
@@ -31,6 +32,8 @@ class UserResponse(BaseModel):
     id: str
     email: str
     full_name: Optional[str] = None
+    consent_version: Optional[str] = None
+    consented_at: Optional[str] = None
     created_at: Optional[str] = None
 
 

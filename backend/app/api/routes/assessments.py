@@ -1,5 +1,6 @@
-from typing import Optional
-from fastapi import APIRouter, HTTPException, Depends
+import logging
+from typing import Dict, Any
+from fastapi import APIRouter, HTTPException, Depends, Request, status
 from bson import ObjectId
 
 from app.config.database import database
@@ -11,8 +12,10 @@ from app.services.assessment_service import (
     delete_assessment,
     analyze_assessment,
 )
-from app.api.deps import get_optional_current_user
+from app.api.deps import get_current_user, verify_assessment_ownership
+from app.utils.rate_limiter import api_limiter
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -24,23 +27,20 @@ router = APIRouter()
 
 @router.get("/assessments/history")
 def list_assessment_history(
-    user: Optional[dict] = Depends(get_optional_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
-    """Return a summary list of assessments, newest first.
-    Filters by authenticated user if logged in.
-    """
-    user_id = user["id"] if user else None
-    return get_assessment_history(user_id=user_id)
+    """Return a summary list of assessments for the authenticated user, newest first."""
+    return get_assessment_history(user_id=current_user["id"])
 
 
 @router.post("/assessments")
 def create_new_assessment(
     data: AssessmentCreate,
-    user: Optional[dict] = Depends(get_optional_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
+    """Create a new private assessment session owned by the authenticated user."""
     try:
-        user_id = user["id"] if user else None
-        assessment_id = create_assessment(data, user_id=user_id)
+        assessment_id = create_assessment(data, user_id=current_user["id"])
 
         return {
             "message": "Assessment created successfully",
@@ -49,18 +49,22 @@ def create_new_assessment(
         }
 
     except Exception as e:
+        logger.error(f"Failed to create assessment: {e}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=str(e),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to create assessment. Please try again.",
         )
 
 
 @router.get("/assessments/{assessment_id}")
-def get_existing_assessment(assessment_id: str):
-
+def get_existing_assessment(
+    assessment_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Retrieve an assessment record with ownership verification."""
     if not ObjectId.is_valid(assessment_id):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid assessment ID",
         )
 
@@ -68,33 +72,40 @@ def get_existing_assessment(assessment_id: str):
 
     if assessment is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Assessment not found",
         )
 
+    verify_assessment_ownership(assessment, current_user)
     return assessment
 
 
 @router.delete("/assessments/{assessment_id}")
 def remove_assessment(
     assessment_id: str,
-    user: Optional[dict] = Depends(get_optional_current_user),
+    current_user: dict = Depends(get_current_user),
 ):
-    """Delete an assessment and its associated data."""
-
+    """Delete an assessment and its associated physical images with ownership verification."""
     if not ObjectId.is_valid(assessment_id):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid assessment ID",
         )
 
-    user_id = user["id"] if user else None
-    deleted = delete_assessment(assessment_id, user_id=user_id)
+    assessment = get_assessment(assessment_id)
+    if assessment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found",
+        )
 
+    verify_assessment_ownership(assessment, current_user)
+
+    deleted = delete_assessment(assessment_id, user_id=current_user["id"])
     if not deleted:
         raise HTTPException(
-            status_code=404,
-            detail="Assessment not found or access denied",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete assessment session",
         )
 
     return {
@@ -104,32 +115,28 @@ def remove_assessment(
 
 
 @router.get("/assessments/{assessment_id}/status")
-def get_status(assessment_id: str):
-    """Return the processing status of an assessment."""
-
+def get_status(
+    assessment_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return the processing status of an assessment with ownership verification."""
     if not ObjectId.is_valid(assessment_id):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid assessment ID",
         )
 
     assessment = database.assessment_sessions.find_one(
-        {"_id": ObjectId(assessment_id)},
-        {
-            "_id": 0,
-            "status": 1,
-            "views": 1,
-            "images": 1,
-            "created_at": 1,
-            "updated_at": 1,
-        },
+        {"_id": ObjectId(assessment_id)}
     )
 
     if assessment is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Assessment not found",
         )
+
+    verify_assessment_ownership(assessment, current_user)
 
     # Compute per-view completion
     images = assessment.get("images", {})
@@ -154,25 +161,38 @@ def get_status(assessment_id: str):
 
 
 @router.post("/assessments/{assessment_id}/analyze")
-def trigger_analysis(assessment_id: str):
-    """Run XAI (Grad-CAM) and knowledge enrichment on processed views.
-
-    This endpoint should be called after images have been uploaded
-    and the initial skin analysis is complete.
-    """
+def trigger_analysis(
+    assessment_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Run XAI (Grad-CAM) and knowledge enrichment with ownership verification and rate limiting."""
+    api_limiter.check(request)
 
     if not ObjectId.is_valid(assessment_id):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid assessment ID",
         )
+
+    assessment = database.assessment_sessions.find_one(
+        {"_id": ObjectId(assessment_id)}
+    )
+
+    if assessment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found",
+        )
+
+    verify_assessment_ownership(assessment, current_user)
 
     try:
         result = analyze_assessment(assessment_id)
 
         if not result.get("success"):
             raise HTTPException(
-                status_code=400,
+                status_code=status.HTTP_400_BAD_REQUEST,
                 detail=result.get(
                     "reason",
                     "Analysis failed",
@@ -185,7 +205,8 @@ def trigger_analysis(assessment_id: str):
         raise
 
     except Exception as exc:
+        logger.error(f"Analysis failed for assessment {assessment_id}: {exc}", exc_info=True)
         raise HTTPException(
-            status_code=500,
-            detail=f"Analysis failed: {str(exc)}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Assessment analysis failed. Please try again.",
         )

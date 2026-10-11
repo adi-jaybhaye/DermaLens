@@ -11,8 +11,8 @@ services:
     environment:
       - MONGODB_URI=${MONGODB_URI}
       - MONGODB_DATABASE=${MONGODB_DATABASE:-face_skin_assessment}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-production_secret_key_change_me_12345}
-      - ENVIRONMENT=production
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:?JWT_SECRET_KEY environment variable is required}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
     volumes:
       - ./uploads:/app/uploads
     restart: unless-stopped

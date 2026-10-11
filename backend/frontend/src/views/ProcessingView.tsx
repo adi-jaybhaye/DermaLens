@@ -4,11 +4,12 @@ import { SparklesIcon, CheckCircleIcon, AlertCircleIcon, RefreshIcon } from '../
 
 interface ProcessingViewProps {
   viewFiles: Record<'front' | 'left' | 'right', File>;
+  captureModes?: Record<'front' | 'left' | 'right', 'camera' | 'upload'>;
   onSuccess: (results: AssessmentResults) => void;
   onError: (message: string) => void;
 }
 
-export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, onSuccess, onError }) => {
+export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, captureModes, onSuccess, onError }) => {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -29,7 +30,13 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, onSuc
         // Step 0: Create assessment
         setCurrentStepIndex(0);
         const viewsToSubmit = Object.keys(viewFiles) as Array<'front' | 'left' | 'right'>;
-        const assessment = await api.createAssessment('upload', viewsToSubmit);
+        const modes = captureModes || { front: 'upload' };
+        const modeValues = Object.values(modes);
+        const allCamera = modeValues.length > 0 && modeValues.every((m) => m === 'camera');
+        const allUpload = modeValues.length > 0 && modeValues.every((m) => m === 'upload');
+        const overallType = allCamera ? 'camera' : allUpload ? 'upload' : 'hybrid';
+
+        const assessment = await api.createAssessment(overallType, viewsToSubmit, modes);
         const assessmentId = assessment.assessment_id;
 
         // Step 1 & 2: Upload each view (triggers quality check + face detection + initial inference)

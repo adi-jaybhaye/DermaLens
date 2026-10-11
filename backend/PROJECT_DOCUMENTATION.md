@@ -86,11 +86,12 @@ Rather than relying on ungrounded generative AI hallucinations, DermaLens mainta
 ## 5. Security Architecture
 
 1. **Password Hashing:** Argon2id (memory-hard, resistant to GPU/ASIC cracking).
-2. **Stateless Authentication:** Signed JWTs using HMAC-SHA256 (`HS256`) with strict expiration.
-3. **Ownership Isolation:** User identity is strictly derived from the validated JWT claims—never trusted from frontend payloads.
-4. **Input Validation & Quality Gate:** File size limit (10MB), MIME check (JPEG, PNG, WebP), OpenCV image decoding validation, blur and brightness gates.
-5. **Private Image Storage:** Images are stored on filesystem (`uploads/`) with random UUIDs; large binary blobs are kept out of MongoDB.
-6. **Rate Limiting:** Sliding-window in-memory limiter prevents credential brute-forcing on auth endpoints.
+2. **Stateless Authentication:** Signed JWTs using HMAC-SHA256 (`HS256`) with strict expiration and validated `JWT_SECRET_KEY` fail-fast production enforcement.
+3. **Ownership Isolation:** User identity is strictly derived from the validated JWT claims (`get_current_user`). Assessment creation, image upload, analysis, results, and deletion strictly require token ownership (`verify_assessment_ownership`). User A cannot access or manipulate User B's data.
+4. **Input Validation & Decompression Bomb Guard:** Strict 10 MB payload limit, MIME and magic-number validation (JPEG, PNG, WebP), `Image.MAX_IMAGE_PIXELS = 25_000_000` to prevent decompression bombs, and dimension boundaries (300px to 4096px).
+5. **Quality & Face Detection Hard-Gates:** Photos must pass Laplacian variance blur check (>= 50), exposure check (40 <= mean brightness <= 220), and BlazeFace single-face detector (exactly 1 face required; 0 or multiple faces rejected).
+6. **Physical Image Deletion & Zero-Orphan Policy:** Uploaded images are stored with randomized UUID keys (server paths are never leaked in API responses). When an upload fails quality/face gates, the temporary file is unlinked immediately. When an assessment is deleted, all associated disk artifacts are permanently unlinked.
+7. **Rate Limiting:** Sliding-window in-memory limiter protects registration, login, and image upload endpoints from brute-force and resource-exhaustion attacks.
 
 ---
 
@@ -99,18 +100,18 @@ Rather than relying on ungrounded generative AI hallucinations, DermaLens mainta
 | Method | Endpoint | Description | Auth |
 |---|---|---|---|
 | `GET` | `/api/v1/health` | Service and MongoDB Atlas health check | Public |
-| `POST` | `/api/v1/auth/register` | Register user with Argon2id hash | Public |
-| `POST` | `/api/v1/auth/login` | Authenticate user & issue JWT | Public |
-| `POST` | `/api/v1/auth/logout` | Client token disposal | Public |
+| `POST` | `/api/v1/auth/register` | Register user with Argon2id hash | Public (Rate-limited) |
+| `POST` | `/api/v1/auth/login` | Authenticate user & issue JWT | Public (Rate-limited) |
+| `POST` | `/api/v1/auth/logout` | Client token disposal endpoint | Bearer JWT |
 | `GET` | `/api/v1/auth/me` | Fetch authenticated user profile | Bearer JWT |
-| `POST` | `/api/v1/assessments` | Create assessment session | Optional JWT |
-| `GET` | `/api/v1/assessments/history` | List assessment history (filtered by user if authenticated) | Optional JWT |
-| `GET` | `/api/v1/assessments/{id}` | Retrieve assessment record | Public |
-| `DELETE` | `/api/v1/assessments/{id}` | Delete assessment and image records | Ownership |
-| `GET` | `/api/v1/assessments/{id}/status` | View status and per-view completion | Public |
-| `POST` | `/api/v1/assessments/{id}/images` | Upload image for `front`, `left`, or `right` view | Public |
-| `POST` | `/api/v1/assessments/{id}/analyze` | Trigger Grad-CAM and knowledge enrichment | Public |
-| `GET` | `/api/v1/assessments/{id}/results` | Fetch complete structured assessment results | Public |
+| `POST` | `/api/v1/assessments` | Create assessment session (with `capture_modes`) | Bearer JWT |
+| `GET` | `/api/v1/assessments/history` | List assessment history for authenticated user | Bearer JWT |
+| `GET` | `/api/v1/assessments/{id}` | Retrieve assessment record | Bearer JWT (Owner Only) |
+| `DELETE` | `/api/v1/assessments/{id}` | Delete assessment and all physical image files | Bearer JWT (Owner Only) |
+| `GET` | `/api/v1/assessments/{id}/status` | View status and per-view completion | Bearer JWT (Owner Only) |
+| `POST` | `/api/v1/assessments/{id}/images` | Upload image for `front`, `left`, or `right` view | Bearer JWT (Owner Only) |
+| `POST` | `/api/v1/assessments/{id}/analyze` | Trigger Grad-CAM and knowledge enrichment | Bearer JWT (Owner Only) |
+| `GET` | `/api/v1/assessments/{id}/results` | Fetch complete structured assessment results | Bearer JWT (Owner Only) |
 | `GET` | `/api/v1/knowledge` | List all 8 curated concern definitions | Public |
 | `GET` | `/api/v1/knowledge/{concept}` | Get detailed knowledge for specific concern | Public |
 | `GET` | `/api/v1/sources` | List all scientific and clinical sources | Public |
@@ -143,6 +144,6 @@ npm run dev
 ### Running Test Suite
 ```powershell
 cd backend
-.\venv\Scripts\pytest.exe -o pythonpath=. tests/test_api_endpoints.py -v
+.\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-All 5 comprehensive endpoint and lifecycle tests pass with 100% success.
+All 14 comprehensive tests across endpoints, authorization isolation, upload security, quality gates, face detection, ML inference, abstention, and physical storage cleanup pass with 100% success.

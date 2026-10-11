@@ -2,7 +2,7 @@
  * API client for Face Skin Assessment System backend.
  */
 
-const API_BASE = '/api/v1';
+const API_BASE = (import.meta as any).env?.VITE_API_BASE || '/api/v1';
 
 export interface User {
   id: string;
@@ -182,14 +182,14 @@ export const api = {
   },
 
   // Assessments
-  async createAssessment(capture_type = 'upload', views = ['front', 'left', 'right']) {
+  async createAssessment(capture_type = 'upload', views: string[] = ['front', 'left', 'right'], capture_modes?: Record<string, string>) {
     const res = await fetch(`${API_BASE}/assessments`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader(),
       },
-      body: JSON.stringify({ capture_type, views }),
+      body: JSON.stringify({ capture_type, views, capture_modes }),
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Failed to create assessment' }));

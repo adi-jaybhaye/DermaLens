@@ -79,8 +79,10 @@ az webapp config appsettings set \
   --settings \
     MONGODB_URI="mongodb+srv://<username>:<password>@cluster.mongodb.net/?retryWrites=true&w=majority" \
     MONGODB_DATABASE="face_skin_assessment" \
-    JWT_SECRET_KEY="<strong-random-production-secret-key>" \
+    JWT_SECRET_KEY="<strong-random-production-secret-key-min-32-chars>" \
     ENVIRONMENT="production" \
+    CORS_ORIGINS="https://dermalens.vercel.app,https://your-domain.com" \
+    MIN_CONFIDENCE_THRESHOLD="0.35" \
     WEBSITES_PORT="8000"
 ```
 
@@ -92,7 +94,32 @@ Navigate to `https://dermlens-assessment-app.azurewebsites.net`.
 
 ---
 
-## 4. Option B: Deploy to Azure Container Apps
+## 4. Vercel Frontend Deployment (Split Architecture)
+
+If deploying the frontend independently on **Vercel** with the backend hosted on **Azure**:
+1. Connect your repository to Vercel and set Root Directory to `frontend`.
+2. Configure Environment Variable in Vercel project settings:
+   `VITE_API_BASE="/api/v1"`
+3. The included `frontend/vercel.json` automatically proxies API requests to your Azure App Service:
+   ```json
+   {
+     "rewrites": [
+       {
+         "source": "/api/v1/:path*",
+         "destination": "https://dermlens-assessment-app.azurewebsites.net/api/v1/:path*"
+       },
+       {
+         "source": "/(.*)",
+         "destination": "/index.html"
+       }
+     ]
+   }
+   ```
+4. Update `CORS_ORIGINS` in Azure App Service application settings to include your Vercel deployment URL.
+
+---
+
+## 5. Option B: Deploy to Azure Container Apps
 
 ```bash
 # Create Container Apps Environment
@@ -117,16 +144,19 @@ az containerapp create \
   --env-vars \
     MONGODB_URI="mongodb+srv://<username>:<password>@cluster.mongodb.net/?retryWrites=true&w=majority" \
     MONGODB_DATABASE="face_skin_assessment" \
-    JWT_SECRET_KEY="<strong-random-production-secret-key>" \
-    ENVIRONMENT="production"
+    JWT_SECRET_KEY="<strong-random-production-secret-key-min-32-chars>" \
+    ENVIRONMENT="production" \
+    CORS_ORIGINS="https://dermalens.vercel.app,https://your-domain.com"
 ```
 
 ---
 
-## 5. Security Checklist
+## 6. Security Checklist
 - [x] HTTPS enforced automatically by Azure (`.azurewebsites.net`).
 - [x] Passwords hashed with Argon2id; passwords never stored or logged in plaintext.
 - [x] MongoDB Atlas credentials restricted to environment configuration.
 - [x] JWT tokens signed with HMAC-SHA256 (`HS256`) and expiration claims.
-- [x] In-memory rate limiting active on `/api/v1/auth/*` endpoints.
+- [x] In-memory rate limiting active on `/api/v1/auth/*` and upload endpoints.
 - [x] Image quality gate rejects invalid images prior to ML processing.
+- [x] BlazeFace detector enforces single-face constraint.
+- [x] Physical file unlinking prevents orphaned image artifacts upon assessment deletion.

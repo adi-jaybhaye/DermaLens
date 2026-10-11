@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, status
 from bson import ObjectId
 
 from app.config.database import database
@@ -7,20 +7,24 @@ from app.services.knowledge_service import (
     get_safety_disclaimer,
     build_why_identified,
 )
+from app.api.deps import get_current_user, verify_assessment_ownership
 
 
 router = APIRouter()
 
 
 @router.get("/assessments/{assessment_id}/results")
-def get_assessment_results(assessment_id: str):
-    """Return structured assessment results with knowledge enrichment
-    and safety disclaimers.
+def get_assessment_results(
+    assessment_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Return structured assessment results with knowledge enrichment,
+    safety disclaimers, and ownership verification.
     """
 
     if not ObjectId.is_valid(assessment_id):
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid assessment ID",
         )
 
@@ -30,9 +34,11 @@ def get_assessment_results(assessment_id: str):
 
     if assessment is None:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Assessment not found",
         )
+
+    verify_assessment_ownership(assessment, current_user)
 
     images = assessment.get("images", {})
     result_views = {}
@@ -81,11 +87,24 @@ def get_assessment_results(assessment_id: str):
                     )
                     sources = knowledge["evidence_references"]
 
-                why_identified = build_why_identified(
-                    region_name=region_name,
-                    predicted_concern=predicted,
-                    confidence=confidence,
+                is_confident = ml_pred.get("is_confident", confidence >= 0.35)
+                confidence_status = ml_pred.get(
+                    "confidence_status",
+                    "possible_pattern" if is_confident else "insufficient_confidence",
                 )
+
+                if is_confident:
+                    why_identified = build_why_identified(
+                        region_name=region_name,
+                        predicted_concern=predicted,
+                        confidence=confidence,
+                    )
+                else:
+                    why_identified = (
+                        f"Visual analysis identified weak features for {concern_info['display_name'] if concern_info else predicted} "
+                        f"in the {region_name.replace('_', ' ')} region with low confidence ({round(confidence * 100, 1)}%), "
+                        f"which is below the certainty threshold. This is considered an inconclusive pattern."
+                    )
 
             enriched_regions[region_name] = {
                 "valid": True,
@@ -97,6 +116,8 @@ def get_assessment_results(assessment_id: str):
                         else predicted
                     ),
                     "confidence": confidence,
+                    "is_confident": ml_pred.get("is_confident", confidence >= 0.35),
+                    "confidence_status": ml_pred.get("confidence_status", "possible_pattern"),
                     "why_identified": why_identified,
                     "why_it_can_occur": why_it_can_occur,
                     "visual_evidence": visual_evidence,

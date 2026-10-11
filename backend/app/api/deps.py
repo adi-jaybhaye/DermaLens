@@ -49,3 +49,20 @@ async def get_optional_current_user(
         return None
 
     return get_user_by_id(payload["sub"])
+
+
+def verify_assessment_ownership(
+    assessment: Dict[str, Any],
+    user: Dict[str, Any],
+) -> None:
+    """Ensure the authenticated user is the legitimate owner of the assessment.
+
+    Raises 403 Forbidden if the user does not own the assessment.
+    """
+    owner_id = assessment.get("user_id")
+    if not owner_id or str(owner_id) != str(user["id"]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access forbidden: You do not have permission to access this assessment",
+        )
+
