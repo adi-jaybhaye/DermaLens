@@ -4,12 +4,13 @@ from fastapi import APIRouter, HTTPException, Depends, Request, status
 from bson import ObjectId
 
 from app.config.database import database
-from app.schemas.assessment import AssessmentCreate
+from app.schemas.assessment import AssessmentCreate, AssessmentRename
 from app.services.assessment_service import (
     create_assessment,
     get_assessment,
     get_assessment_history,
     delete_assessment,
+    rename_assessment,
     analyze_assessment,
 )
 from app.api.deps import get_current_user, verify_assessment_ownership
@@ -111,6 +112,42 @@ def remove_assessment(
     return {
         "message": "Assessment deleted successfully",
         "assessment_id": assessment_id,
+    }
+
+
+@router.patch("/assessments/{assessment_id}/rename")
+def rename_existing_assessment(
+    assessment_id: str,
+    payload: AssessmentRename,
+    current_user: dict = Depends(get_current_user),
+):
+    """Rename an assessment session with ownership verification."""
+    if not ObjectId.is_valid(assessment_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid assessment ID",
+        )
+
+    assessment = get_assessment(assessment_id)
+    if assessment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found",
+        )
+
+    verify_assessment_ownership(assessment, current_user)
+
+    success = rename_assessment(assessment_id, payload.name, user_id=current_user["id"])
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Failed to rename assessment",
+        )
+
+    return {
+        "message": "Assessment renamed successfully",
+        "assessment_id": assessment_id,
+        "name": payload.name.strip(),
     }
 
 

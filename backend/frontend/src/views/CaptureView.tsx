@@ -173,6 +173,7 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
   };
 
   const isReadyToProceed = Boolean(viewFiles.front);
+  const allCaptured = Boolean(viewFiles.front && viewFiles.left && viewFiles.right);
 
   // Find next pending view for the "Resume Capture" button
   const nextPendingView = (['front', 'left', 'right'] as const).find((v) => !viewFiles[v]);
@@ -194,6 +195,67 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '30px 20px 80px' }}>
+      {/* Capture Completion State (Loop 17) */}
+      {allCaptured && (
+        <div
+          className="glass-panel"
+          style={{
+            marginBottom: 24,
+            padding: '20px 24px',
+            backgroundColor: 'var(--color-success-bg)',
+            border: '1.5px solid var(--color-success-border)',
+            borderRadius: 'var(--radius-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 16,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{
+              width: 44,
+              height: 44,
+              borderRadius: '50%',
+              backgroundColor: 'var(--color-sage-light)',
+              color: 'var(--color-sage-dark)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <CheckCircleIcon size={24} />
+            </div>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--color-charcoal)' }}>
+                All required views are ready
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 4, fontSize: 13, color: 'var(--color-success-text)', fontWeight: 600 }}>
+                <span>Front ✓</span>
+                <span>Left Profile ✓</span>
+                <span>Right Profile ✓</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => onComplete(viewFiles as Record<'front' | 'left' | 'right', File>, captureModes)}
+            className="btn-primary"
+            style={{
+              padding: '11px 24px',
+              fontSize: 14,
+              fontWeight: 600,
+              backgroundColor: 'var(--color-sage)',
+              borderColor: 'var(--color-sage)',
+              boxShadow: '0 4px 12px rgba(95, 130, 109, 0.25)',
+            }}
+          >
+            Review &amp; Analyze All Views &rarr;
+          </button>
+        </div>
+      )}
+
       {/* View Selector Tabs with live thumbnails */}
       <div className="capture-tabs-bar">
         {(['front', 'left', 'right'] as const).map((view) => {

@@ -15,11 +15,11 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, captu
 
   const steps = [
     'Checking Photo Clarity, Lighting & Resolution',
-    'Detecting Facial Contours & Alignment Landmarks',
+    'Detecting Face & Facial Landmarks',
     'Mapping 5 Facial Zones (Forehead, Cheeks, Nose, Chin)',
-    'Analyzing Skin Surface Patterns & Textures',
+    'Analyzing Skin Surface Patterns',
     'Generating Visual Focus Heatmaps',
-    'Synthesizing Dermatological Insights & Evidence',
+    'Preparing Evidence-Based Insights',
   ];
 
   useEffect(() => {

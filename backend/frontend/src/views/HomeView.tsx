@@ -1,19 +1,27 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../api/client';
+import { api, type AssessmentHistoryItem } from '../api/client';
 import { SparklesIcon, CameraIcon, ShieldCheckIcon, EyeIcon, BookOpenIcon, ChevronRightIcon } from '../components/Icons';
+import {
+  formatAssessmentDateTime,
+  formatAssessmentStatus,
+  getStatusBadgeClass,
+  formatCaptureBadge,
+} from '../utils/formatters';
 
 interface HomeViewProps {
   onStartAssessment: () => void;
   onOpenHistoryItem: (id: string) => void;
   onExploreKnowledge: () => void;
+  onViewAllAssessments?: () => void;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onStartAssessment,
   onOpenHistoryItem,
   onExploreKnowledge,
+  onViewAllAssessments,
 }) => {
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<AssessmentHistoryItem[]>([]);
 
   useEffect(() => {
     api.getAssessmentHistory().then(setHistory).catch(() => {});
@@ -253,58 +261,72 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* Recent Assessment Sessions */}
+      {/* Welcome Back & Latest Assessment Card (Loop 18) */}
       {history.length > 0 && (
-        <section className="glass-panel" style={{ padding: '30px 28px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-            <div>
-              <h4 style={{ fontSize: 20 }}>Recent Assessments</h4>
-              <p style={{ fontSize: 13, color: 'var(--color-muted)' }}>Your previously generated multi-view assessment sessions</p>
+        <section
+          className="glass-panel"
+          style={{
+            padding: '26px 28px',
+            backgroundColor: '#FFFFFF',
+            border: '1.5px solid var(--color-border)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 18,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div>
+            <div style={{
+              fontSize: 11.5,
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              letterSpacing: '0.6px',
+              color: 'var(--color-terracotta)',
+              marginBottom: 4,
+            }}>
+              Welcome Back &bull; Your Latest Assessment
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+              <h4 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-charcoal)' }}>
+                {history[0].name || `Assessment ${history[0].assessment_number || 1}`}
+              </h4>
+              <span className={`pill-badge ${getStatusBadgeClass(history[0].status)}`} style={{ fontSize: 11 }}>
+                {formatAssessmentStatus(history[0].status)}
+              </span>
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--color-muted)', marginTop: 4 }}>
+              {formatAssessmentDateTime(history[0].created_at)} &bull; {history[0].views?.length || 1} Views &bull; {formatCaptureBadge(history[0].capture_type, history[0].capture_modes)}
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {history.slice(0, 5).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => onOpenHistoryItem(item.id)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '14px 18px',
-                  borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-border-light)',
-                  cursor: 'pointer',
-                  transition: 'transform var(--transition-fast), border-color var(--transition-fast)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateX(4px)';
-                  e.currentTarget.style.borderColor = 'var(--color-terracotta)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.borderColor = 'var(--color-border-light)';
-                }}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {onViewAllAssessments && (
+              <button
+                onClick={onViewAllAssessments}
+                className="btn-ghost"
+                style={{ padding: '8px 16px', fontSize: 13 }}
               >
-                <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>
-                    Session #{item.id.slice(-6)}
-                  </div>
-                  <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>
-                    Views: {item.views?.join(', ') || 'front'} &bull; {new Date(item.created_at).toLocaleDateString()}
-                  </div>
-                </div>
+                My Assessments &rarr;
+              </button>
+            )}
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span className="pill-badge pill-sage" style={{ fontSize: 11 }}>
-                    {item.status}
-                  </span>
-                  <ChevronRightIcon size={18} color="var(--color-muted)" />
-                </div>
-              </div>
-            ))}
+            <button
+              onClick={() => onOpenHistoryItem(history[0].id)}
+              className="btn-secondary"
+              style={{
+                padding: '9px 20px',
+                fontSize: 13.5,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <span>View Results</span>
+              <ChevronRightIcon size={15} />
+            </button>
           </div>
         </section>
       )}

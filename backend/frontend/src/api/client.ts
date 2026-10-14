@@ -33,10 +33,42 @@ export interface ConcernKnowledge {
   }>;
 }
 
+export interface XaiSource {
+  id: string;
+  title: string;
+  authors: string;
+  year: string;
+  authority: string;
+  identifier: string;
+  url?: string;
+  key_findings: string;
+  limitations: string;
+}
+
+export interface XaiLearnMore {
+  scientific_explanation: string;
+  contributing_factors: string[];
+  limitations: string;
+  safety_guidance: string;
+  sources: XaiSource[];
+}
+
+export interface RegionXaiDetails {
+  what_we_noticed: string;
+  where_we_noticed_it: string;
+  why_ai_identified_it: string;
+  why_it_can_occur: string;
+  heatmap_explanation: string;
+  learn_more: XaiLearnMore;
+}
+
 export interface RegionConcern {
   concept: string;
   display_name: string;
   confidence: number;
+  model_confidence?: number;
+  is_confident?: boolean;
+  confidence_status?: string;
   why_identified: string;
   why_it_can_occur: string;
   visual_evidence: string[];
@@ -45,12 +77,21 @@ export interface RegionConcern {
     source: string;
     url: string;
   }>;
+  xai?: RegionXaiDetails;
 }
 
 export interface RegionData {
   valid: boolean;
   reason?: string;
   concern?: RegionConcern | null;
+  xai_explanation?: {
+    concept: string;
+    display_name: string;
+    model_confidence: number;
+    confidence_status: string;
+    region: { name: string; display_name: string };
+    xai: RegionXaiDetails;
+  };
   all_probabilities?: Record<string, number>;
   texture_metrics?: {
     mean_brightness?: number;
@@ -80,13 +121,32 @@ export interface ViewResult {
   xai?: Record<string, XaiData>;
 }
 
-export interface AssessmentResults {
-  assessment_id: string;
+export interface AssessmentHistoryItem {
+  id: string;
+  assessment_number?: number;
+  name?: string;
   status: string;
   capture_type: string;
+  capture_modes?: Record<string, string>;
+  views: string[];
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface AssessmentResults {
+  assessment_id: string;
+  assessment_number?: number;
+  name?: string;
+  created_at?: string;
+  updated_at?: string;
+  status: string;
+  capture_type: string;
+  capture_modes?: Record<string, string>;
   skin_type: {
     status: string;
     note: string;
+    scientific_rationale?: string;
+    supporting_sources?: string[];
   };
   views: Record<string, ViewResult>;
   safety: {
@@ -236,11 +296,39 @@ export const api = {
     return res.json();
   },
 
-  async getAssessmentHistory() {
+  async getAssessmentHistory(): Promise<AssessmentHistoryItem[]> {
     const res = await fetch(`${API_BASE}/assessments/history`, {
       headers: getAuthHeader(),
     });
     if (!res.ok) return [];
+    return res.json();
+  },
+
+  async renameAssessment(assessmentId: string, name: string): Promise<{ message: string; assessment_id: string; name: string }> {
+    const res = await fetch(`${API_BASE}/assessments/${assessmentId}/rename`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeader(),
+      },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to rename assessment' }));
+      throw new Error(err.detail || 'Failed to rename assessment');
+    }
+    return res.json();
+  },
+
+  async deleteAssessment(assessmentId: string): Promise<{ message: string; assessment_id: string }> {
+    const res = await fetch(`${API_BASE}/assessments/${assessmentId}`, {
+      method: 'DELETE',
+      headers: getAuthHeader(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to delete assessment' }));
+      throw new Error(err.detail || 'Failed to delete assessment');
+    }
     return res.json();
   },
 

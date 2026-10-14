@@ -35,12 +35,23 @@ class AssessmentCreate(BaseModel):
     )
 
 
+class AssessmentRename(BaseModel):
+    name: str = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="User-assigned custom name for the assessment session."
+    )
+
+
 class AssessmentResponse(BaseModel):
     """
     Basic assessment information returned by the API.
     """
 
     id: str
+    assessment_number: Optional[int] = None
+    name: Optional[str] = None
     status: str
     capture_type: str
     capture_modes: Optional[Dict[str, str]] = None

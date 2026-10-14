@@ -17,6 +17,12 @@ def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
     now = datetime.now(timezone.utc)
     consented_at = data.consented_at or now
 
+    # Determine persistent sequential assessment number for this user
+    count_query = {"user_id": user_id}
+    prior_count = database.assessment_sessions.count_documents(count_query)
+    assessment_number = prior_count + 1
+    default_name = f"Assessment {assessment_number}"
+
     assessment_document = {
         "status": "created",
         "capture_type": data.capture_type,
@@ -25,6 +31,8 @@ def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
         "consent_version": data.consent_version or "1.0",
         "consented_at": consented_at,
         "user_id": user_id,
+        "assessment_number": assessment_number,
+        "name": default_name,
         "created_at": now,
         "updated_at": now,
     }
@@ -49,6 +57,23 @@ def get_assessment(assessment_id: str):
     if assessment is None:
         return None
 
+    # Ensure persistent assessment_number and name if missing on legacy documents
+    if assessment.get("assessment_number") is None:
+        user_id = assessment.get("user_id")
+        created_time = assessment.get("created_at") or datetime.now(timezone.utc)
+        older_count = database.assessment_sessions.count_documents({
+            "user_id": user_id,
+            "created_at": {"$lt": created_time}
+        })
+        assessment_number = older_count + 1
+        name = assessment.get("name") or f"Assessment {assessment_number}"
+        database.assessment_sessions.update_one(
+            {"_id": object_id},
+            {"$set": {"assessment_number": assessment_number, "name": name}}
+        )
+        assessment["assessment_number"] = assessment_number
+        assessment["name"] = name
+
     assessment["id"] = str(assessment.pop("_id"))
 
     return assessment
@@ -57,26 +82,70 @@ def get_assessment(assessment_id: str):
 def get_assessment_history(user_id: str = None):
     # Isolated by identity; unauthenticated requests only see anonymous sessions
     query = {"user_id": user_id}
-    assessments = database.assessment_sessions.find(
+    assessments = list(database.assessment_sessions.find(
         query,
         {
             "_id": 1,
             "status": 1,
             "capture_type": 1,
+            "capture_modes": 1,
             "views": 1,
             "user_id": 1,
+            "assessment_number": 1,
+            "name": 1,
             "created_at": 1,
             "updated_at": 1,
         },
-    ).sort("created_at", -1)
+    ).sort("created_at", -1))
+
+    # Check if any legacy assessments are missing persistent assessment_number
+    missing_numbers = [a for a in assessments if a.get("assessment_number") is None]
+    if missing_numbers:
+        # Sort chronologically ascending to assign stable sequential numbers
+        chrono = sorted(assessments, key=lambda a: a.get("created_at") or datetime.min)
+        for idx, a in enumerate(chrono, start=1):
+            if a.get("assessment_number") is None:
+                a["assessment_number"] = idx
+                if not a.get("name"):
+                    a["name"] = f"Assessment {idx}"
+                database.assessment_sessions.update_one(
+                    {"_id": a["_id"]},
+                    {"$set": {"assessment_number": idx, "name": a["name"]}}
+                )
 
     results = []
-
     for assessment in assessments:
         assessment["id"] = str(assessment.pop("_id"))
+        if not assessment.get("name"):
+            assessment["name"] = f"Assessment {assessment.get('assessment_number', 1)}"
         results.append(assessment)
 
     return results
+
+
+def rename_assessment(assessment_id: str, new_name: str, user_id: str = None) -> bool:
+    """Optionally rename an assessment session with identity/ownership safety."""
+    try:
+        object_id = ObjectId(assessment_id)
+    except Exception:
+        return False
+
+    existing = database.assessment_sessions.find_one({"_id": object_id})
+    if not existing:
+        return False
+
+    if user_id and existing.get("user_id") and str(existing["user_id"]) != str(user_id):
+        return False
+
+    clean_name = new_name.strip()
+    if not clean_name:
+        return False
+
+    res = database.assessment_sessions.update_one(
+        {"_id": object_id},
+        {"$set": {"name": clean_name, "updated_at": datetime.now(timezone.utc)}}
+    )
+    return res.acknowledged
 
 
 def delete_assessment(assessment_id: str, user_id: str = None) -> bool:

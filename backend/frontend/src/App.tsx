@@ -2,16 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { api, type User, type AssessmentResults } from './api/client';
 import { Navbar } from './components/Navbar';
 import { AuthModal } from './components/AuthModal';
+import { ToastProvider, useToast } from './components/Toast';
 import { HomeView } from './views/HomeView';
 import { PreparationView } from './views/PreparationView';
 import { CaptureView } from './views/CaptureView';
 import { ProcessingView } from './views/ProcessingView';
 import { ResultsDashboardView } from './views/ResultsDashboardView';
+import { MyAssessmentsView } from './views/MyAssessmentsView';
 import { KnowledgeView } from './views/KnowledgeView';
 import { SourcesView } from './views/SourcesView';
 
-export const App: React.FC = () => {
-  const [currentTab, setCurrentTab] = useState<'home' | 'preparation' | 'capture' | 'processing' | 'results' | 'knowledge' | 'sources'>('home');
+export type AppTab =
+  | 'home'
+  | 'preparation'
+  | 'capture'
+  | 'processing'
+  | 'results'
+  | 'my-assessments'
+  | 'knowledge'
+  | 'sources';
+
+const AppContent: React.FC = () => {
+  const [currentTab, setCurrentTab] = useState<AppTab>('home');
   const [user, setUser] = useState<User | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [viewFiles, setViewFiles] = useState<Record<'front' | 'left' | 'right', File> | null>(null);
@@ -21,6 +33,7 @@ export const App: React.FC = () => {
     right: 'upload',
   });
   const [results, setResults] = useState<AssessmentResults | null>(null);
+  const { showToast } = useToast();
 
   // Check auth status on load
   useEffect(() => {
@@ -64,21 +77,22 @@ export const App: React.FC = () => {
       const data = await api.getResults(assessmentId);
       setResults(data);
       setCurrentTab('results');
-    } catch (err) {
-      alert('Could not load assessment details.');
+    } catch (err: any) {
+      showToast(err.message || 'Could not load assessment details.', 'error');
     }
   };
 
   const handleLogout = () => {
     api.logout();
     setUser(null);
+    showToast('Signed out successfully', 'info');
   };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar
         currentTab={currentTab}
-        setCurrentTab={(tab) => setCurrentTab(tab as any)}
+        setCurrentTab={(tab) => setCurrentTab(tab as AppTab)}
         user={user}
         onOpenAuth={() => setIsAuthModalOpen(true)}
         onLogout={handleLogout}
@@ -90,6 +104,14 @@ export const App: React.FC = () => {
             onStartAssessment={handleStartAssessment}
             onOpenHistoryItem={handleOpenHistoryItem}
             onExploreKnowledge={() => setCurrentTab('knowledge')}
+            onViewAllAssessments={() => setCurrentTab('my-assessments')}
+          />
+        )}
+
+        {currentTab === 'my-assessments' && (
+          <MyAssessmentsView
+            onStartAssessment={handleStartAssessment}
+            onOpenAssessment={handleOpenHistoryItem}
           />
         )}
 
@@ -153,9 +175,20 @@ export const App: React.FC = () => {
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
-        onSuccess={(u) => setUser(u)}
+        onSuccess={(u) => {
+          setUser(u);
+          showToast(`Welcome back, ${u.full_name || u.email}!`, 'success');
+        }}
       />
     </div>
+  );
+};
+
+export const App: React.FC = () => {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 };
 

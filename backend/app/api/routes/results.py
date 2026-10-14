@@ -2,10 +2,13 @@ from fastapi import APIRouter, HTTPException, Depends, status
 from bson import ObjectId
 
 from app.config.database import database
+from app.services.assessment_service import get_assessment
 from app.services.knowledge_service import (
     get_concern,
     get_safety_disclaimer,
     build_why_identified,
+    get_region_xai_explanation,
+    get_skin_type_methodology,
 )
 from app.api.deps import get_current_user, verify_assessment_ownership
 
@@ -19,7 +22,7 @@ def get_assessment_results(
     current_user: dict = Depends(get_current_user),
 ):
     """Return structured assessment results with knowledge enrichment,
-    safety disclaimers, and ownership verification.
+    safety disclaimers, ownership verification, and two-level XAI explanations.
     """
 
     if not ObjectId.is_valid(assessment_id):
@@ -28,9 +31,7 @@ def get_assessment_results(
             detail="Invalid assessment ID",
         )
 
-    assessment = database.assessment_sessions.find_one(
-        {"_id": ObjectId(assessment_id)}
-    )
+    assessment = get_assessment(assessment_id)
 
     if assessment is None:
         raise HTTPException(
@@ -72,6 +73,20 @@ def get_assessment_results(
             visual_evidence = None
             sources = []
 
+            is_confident = ml_pred.get("is_confident", confidence >= 0.35)
+            confidence_status = ml_pred.get(
+                "confidence_status",
+                "possible_pattern" if is_confident else "insufficient_confidence",
+            )
+
+            # Deep-evidence XAI explanation (Level 1 everyday + Level 2 Learn More)
+            xai_enriched = get_region_xai_explanation(
+                region_key=region_name,
+                predicted_concern=predicted if (predicted and ml_pred.get("success")) else None,
+                confidence=confidence,
+                is_confident=is_confident,
+            )
+
             if predicted and ml_pred.get("success"):
                 knowledge = get_concern(predicted)
 
@@ -87,12 +102,6 @@ def get_assessment_results(
                     )
                     sources = knowledge["evidence_references"]
 
-                is_confident = ml_pred.get("is_confident", confidence >= 0.35)
-                confidence_status = ml_pred.get(
-                    "confidence_status",
-                    "possible_pattern" if is_confident else "insufficient_confidence",
-                )
-
                 if is_confident:
                     why_identified = build_why_identified(
                         region_name=region_name,
@@ -100,9 +109,11 @@ def get_assessment_results(
                         confidence=confidence,
                     )
                 else:
+                    display_label = concern_info["display_name"] if concern_info else predicted
+                    confidence_pct = round(confidence * 100, 1)
                     why_identified = (
-                        f"Visual analysis identified weak features for {concern_info['display_name'] if concern_info else predicted} "
-                        f"in the {region_name.replace('_', ' ')} region with low confidence ({round(confidence * 100, 1)}%), "
+                        f"Visual analysis identified weak features for {display_label} "
+                        f"in the {region_name.replace('_', ' ')} region with model confidence of {confidence_pct}%, "
                         f"which is below the certainty threshold. This is considered an inconclusive pattern."
                     )
 
@@ -116,13 +127,16 @@ def get_assessment_results(
                         else predicted
                     ),
                     "confidence": confidence,
-                    "is_confident": ml_pred.get("is_confident", confidence >= 0.35),
-                    "confidence_status": ml_pred.get("confidence_status", "possible_pattern"),
+                    "model_confidence": confidence,
+                    "is_confident": is_confident,
+                    "confidence_status": confidence_status,
                     "why_identified": why_identified,
                     "why_it_can_occur": why_it_can_occur,
                     "visual_evidence": visual_evidence,
                     "sources": sources,
+                    "xai": xai_enriched.get("xai"),
                 } if predicted else None,
+                "xai_explanation": xai_enriched,
                 "all_probabilities": ml_pred.get(
                     "probabilities", {}
                 ),
@@ -151,20 +165,27 @@ def get_assessment_results(
             "xai": xai_data,
         }
 
-    # Skin type — not available without a validated model
+    # Skin type — unavailable without physical biophysical instrumentation
+    skin_type_meta = get_skin_type_methodology()
     skin_type = {
-        "status": "unavailable",
-        "note": (
-            "Skin type determination requires physical sebum "
-            "measurement and barrier evaluation. DermaLens focuses on "
-            "8 visible surface skin patterns."
-        ),
+        "status": skin_type_meta["status"],
+        "note": skin_type_meta["short_explanation"],
+        "scientific_rationale": skin_type_meta["scientific_rationale"],
+        "supporting_sources": skin_type_meta["supporting_sources"],
     }
+
+    created_at = assessment.get("created_at")
+    updated_at = assessment.get("updated_at")
 
     return {
         "assessment_id": assessment_id,
+        "assessment_number": assessment.get("assessment_number"),
+        "name": assessment.get("name") or f"Assessment {assessment.get('assessment_number', 1)}",
+        "created_at": created_at.isoformat() if hasattr(created_at, "isoformat") else created_at,
+        "updated_at": updated_at.isoformat() if hasattr(updated_at, "isoformat") else updated_at,
         "status": assessment.get("status"),
         "capture_type": assessment.get("capture_type"),
+        "capture_modes": assessment.get("capture_modes", {}),
         "skin_type": skin_type,
         "views": result_views,
         "safety": get_safety_disclaimer(),

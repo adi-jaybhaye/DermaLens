@@ -8,6 +8,12 @@ from app.data.skin_concerns_knowledge import (
     SKIN_CONCERNS_KNOWLEDGE,
     SAFETY_DISCLAIMER,
 )
+from app.data.xai_knowledge import (
+    build_xai_response,
+    SKIN_TYPE_METHODOLOGY,
+    XAI_CONCERNS_KNOWLEDGE,
+)
+from app.data.evidence_sources import EVIDENCE_SOURCES, get_source_by_id
 
 
 def get_all_concerns() -> list[dict]:
@@ -28,6 +34,26 @@ def get_concern_names() -> list[str]:
 def get_safety_disclaimer() -> dict:
     """Return the standard safety disclaimer."""
     return SAFETY_DISCLAIMER
+
+
+def get_region_xai_explanation(
+    region_key: str,
+    predicted_concern: Optional[str],
+    confidence: float,
+    is_confident: bool = True,
+) -> dict:
+    """Return comprehensive, two-level XAI explanation for a facial region.
+    
+    Level 1 provides simple, everyday language (What, Where, Why AI, Why can this occur).
+    Level 2 provides a detailed Learn More section with scientific background,
+    limitations, and verified research sources.
+    """
+    return build_xai_response(region_key, predicted_concern, confidence, is_confident)
+
+
+def get_skin_type_methodology() -> dict:
+    """Return scientifically grounded rationale for why camera-based skin type is unavailable."""
+    return SKIN_TYPE_METHODOLOGY
 
 
 def build_why_identified(
@@ -64,3 +90,4 @@ def build_why_identified(
         f"This is based on surface visual pattern characteristics and does not "
         f"constitute a medical diagnosis."
     )
+
