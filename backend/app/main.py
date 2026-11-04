@@ -59,6 +59,30 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.middleware("http")
+async def security_and_cache_control_middleware(request: Request, call_next):
+    response = await call_next(request)
+
+    path = request.url.path
+    # Set strict anti-caching headers for sensitive personal biometric & auth endpoints
+    sensitive_prefixes = (
+        "/api/v1/auth/me",
+        "/api/v1/assessments",
+        "/api/v1/results",
+        "/api/v1/xai",
+    )
+    if any(path.startswith(prefix) for prefix in sensitive_prefixes):
+        response.headers["Cache-Control"] = "private, no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+
+    # Defense-in-depth standard security headers
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
+
 # Authentication & Identity
 app.include_router(
     auth_router,

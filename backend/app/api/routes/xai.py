@@ -1,6 +1,7 @@
 import logging
-from fastapi import APIRouter, File, HTTPException, UploadFile, Request, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Request, status
 
+from app.api.deps import get_current_user
 from app.ml.xai.gradcam import generate_gradcam
 from app.utils.rate_limiter import upload_limiter
 
@@ -12,9 +13,14 @@ MAX_IMAGE_SIZE = 10 * 1024 * 1024
 
 
 @router.post("/xai/gradcam")
-async def gradcam_analysis(request: Request, file: UploadFile = File(...)):
-    """Generate a Grad-CAM visual focus heatmap for a standalone image.
+async def gradcam_analysis(
+    request: Request,
+    file: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Generate a Grad-CAM visual focus heatmap for an image.
 
+    Requires authenticated user session or token.
     Returns the predicted concern, confidence, class probabilities,
     and base64-encoded visual heatmap and overlay representations.
     """
@@ -52,4 +58,3 @@ async def gradcam_analysis(request: Request, file: UploadFile = File(...)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Visual focus heatmap generation failed. Please try again with a valid, clear image.",
         )
-

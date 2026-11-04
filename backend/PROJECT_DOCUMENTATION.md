@@ -50,7 +50,7 @@ Interactive Results Dashboard
   8. `wrinkles` (Fine Lines & Expression Folds)
 - **Dataset Size:** 4,224 files by class count; 4,222 images processed by training pipeline.
 - **Model Checkpoint:** `training/models/efficientnet_b0_skin_concerns.pth`
-- **Validation Accuracy:** **92.89%** on the closed Dataset A validation split.
+- **Validation Accuracy:** **92.89%** on a deterministic 20% random validation split (seed 42, N=844 images) of the skin concerns dataset.
   - *Academic Honesty Note:* This figure represents **validation accuracy on the training split only**. It must **never** be cited as clinical accuracy, real-world accuracy, diagnostic accuracy, or dermatologist-level accuracy.
 
 ### Current ML Model Limitations
@@ -107,17 +107,18 @@ Rather than relying on ungrounded generative AI hallucinations, DermaLens mainta
 | `POST` | `/api/v1/assessments` | Create assessment session (with `capture_modes`) | Bearer JWT |
 | `GET` | `/api/v1/assessments/history` | List assessment history for authenticated user | Bearer JWT |
 | `GET` | `/api/v1/assessments/{id}` | Retrieve assessment record | Bearer JWT (Owner Only) |
-| `DELETE` | `/api/v1/assessments/{id}` | Delete assessment and all physical image files | Bearer JWT (Owner Only) |
-| `GET` | `/api/v1/assessments/{id}/status` | View status and per-view completion | Bearer JWT (Owner Only) |
-| `POST` | `/api/v1/assessments/{id}/images` | Upload image for `front`, `left`, or `right` view | Bearer JWT (Owner Only) |
-| `POST` | `/api/v1/assessments/{id}/analyze` | Trigger Grad-CAM and knowledge enrichment | Bearer JWT (Owner Only) |
-| `GET` | `/api/v1/assessments/{id}/results` | Fetch complete structured assessment results | Bearer JWT (Owner Only) |
+| `DELETE` | `/api/v1/assessments/{id}` | Delete assessment and all physical image files | Bearer JWT or Cookie (Owner Only) |
+| `POST` | `/api/v1/assessments/{id}/abandon` | Mark incomplete assessment as abandoned & purge partial uploads | Bearer JWT or Cookie (Owner Only) |
+| `GET` | `/api/v1/assessments/{id}/status` | View status and per-view completion | Bearer JWT or Cookie (Owner Only) |
+| `POST` | `/api/v1/assessments/{id}/images` | Upload image for `front`, `left`, or `right` view | Bearer JWT or Cookie (Owner Only) |
+| `POST` | `/api/v1/assessments/{id}/analyze` | Trigger Grad-CAM and knowledge enrichment | Bearer JWT or Cookie (Owner Only) |
+| `GET` | `/api/v1/assessments/{id}/results` | Fetch complete structured assessment results | Bearer JWT or Cookie (Owner Only) |
 | `GET` | `/api/v1/knowledge` | List all 8 curated concern definitions | Public |
 | `GET` | `/api/v1/knowledge/{concept}` | Get detailed knowledge for specific concern | Public |
 | `GET` | `/api/v1/sources` | List all scientific and clinical sources | Public |
 | `GET` | `/api/v1/sources/{id}` | Get specific clinical source by ID | Public |
 | `GET` | `/api/v1/safety` | Retrieve safety disclaimers and model benchmark notes | Public |
-| `POST` | `/api/v1/xai/gradcam` | Direct Grad-CAM computation on uploaded image | Public |
+| `POST` | `/api/v1/xai/gradcam` | Direct Grad-CAM computation on uploaded image | Bearer JWT or Cookie (Authenticated) |
 
 ---
 
@@ -146,4 +147,4 @@ npm run dev
 cd backend
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-All 14 comprehensive tests across endpoints, authorization isolation, upload security, quality gates, face detection, ML inference, abstention, and physical storage cleanup pass with 100% success.
+All 45 comprehensive tests across endpoints, authorization isolation, upload security, quality gates, face detection, ML inference, abstention, atomic sequence numbering, storage service failfast, private cache-control, and physical storage cleanup pass with 100% success.

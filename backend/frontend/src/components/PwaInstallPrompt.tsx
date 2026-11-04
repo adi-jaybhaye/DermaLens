@@ -119,7 +119,7 @@ export const PwaInstallPrompt: React.FC = () => {
         <div className="pwa-banner-text">
           <div className="pwa-banner-header">
             <span className="pwa-banner-eyebrow">Progressive Web App</span>
-            <span className="pwa-banner-badge">Fast & Offline-Ready</span>
+            <span className="pwa-banner-badge">Fast & Installable</span>
           </div>
           <h3 className="pwa-banner-title">Install DermaLens on Your Device</h3>
           <p className="pwa-banner-description">

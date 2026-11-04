@@ -6,7 +6,11 @@ from torchvision import models, transforms
 from PIL import Image
 
 from app.config.settings import settings
-
+from app.ml.model.model_artifact import (
+    resolve_model_artifact_path,
+    get_model_metadata,
+    MODEL_VERSION,
+)
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -23,34 +27,14 @@ TRANSFORM = transforms.Compose([
 
 
 def resolve_model_path() -> Path:
-    """Resolve model path from settings or fallback locations."""
-    configured = Path(settings.model_path)
-    if configured.is_absolute() and configured.exists():
-        return configured
-
-    # Relative to base directory
-    candidate1 = BASE_DIR / settings.model_path
-    if candidate1.exists():
-        return candidate1
-
-    candidate2 = BASE_DIR / "training" / "models" / "efficientnet_b0_skin_concerns.pth"
-    if candidate2.exists():
-        return candidate2
-
-    candidate3 = BASE_DIR / "models" / "efficientnet_b0_skin_concerns.pth"
-    if candidate3.exists():
-        return candidate3
-
-    raise FileNotFoundError(
-        f"EfficientNet-B0 checkpoint not found at '{settings.model_path}'. "
-        "Please ensure the model weights are placed in training/models/ or configure MODEL_PATH."
-    )
+    """Resolve model path using the consolidated model artifact architecture."""
+    return resolve_model_artifact_path()
 
 
 class EfficientNetSkinConcernPredictor:
 
     def __init__(self):
-        model_path = resolve_model_path()
+        model_path = resolve_model_artifact_path()
         checkpoint = torch.load(
             model_path,
             map_location=DEVICE,

@@ -17,7 +17,8 @@ class StorageService:
     
     Provides private object storage:
     - Azure Blob Storage when AZURE_STORAGE_CONNECTION_STRING is configured.
-    - Local private filesystem storage fallback when connection string is not provided.
+    - Local private filesystem storage fallback when in non-production environments.
+    - Production enforces strict Azure Blob usage with NO silent fallback to local storage.
     """
 
     def __init__(self):
@@ -27,7 +28,15 @@ class StorageService:
         self._init_storage()
 
     def _init_storage(self):
+        is_prod = settings.environment.lower() == "production"
         conn_str = settings.azure_storage_connection_string.strip()
+
+        if is_prod and not conn_str:
+            raise RuntimeError(
+                "FATAL: Production environment requires AZURE_STORAGE_CONNECTION_STRING. "
+                "Silent fallback to local filesystem storage is strictly prohibited in production."
+            )
+
         if conn_str:
             try:
                 from azure.storage.blob import BlobServiceClient
@@ -42,6 +51,11 @@ class StorageService:
                     f"Azure Blob Storage successfully initialized with container '{settings.azure_storage_container}'."
                 )
             except Exception as e:
+                if is_prod:
+                    raise RuntimeError(
+                        f"FATAL: Azure Blob Storage initialization failed in production: {e}. "
+                        "Fallback to local filesystem storage is disabled in production."
+                    ) from e
                 logger.warning(
                     f"Azure Blob Storage initialization failed: {e}. Falling back to local storage in '{UPLOAD_DIR}'."
                 )
@@ -67,6 +81,7 @@ class StorageService:
         - file_path: storage URI or local path for retrieval
         - storage_type: 'azure_blob' or 'local'
         """
+        is_prod = settings.environment.lower() == "production"
         ext = ".jpg"
         if filename and "." in filename:
             ext = Path(filename).suffix.lower()
@@ -92,9 +107,19 @@ class StorageService:
                     "storage_type": "azure_blob",
                 }
             except Exception as e:
+                if is_prod:
+                    raise RuntimeError(
+                        f"Failed to upload to Azure Blob Storage in production: {e}. "
+                        "Local fallback is prohibited."
+                    ) from e
                 logger.error(f"Failed to upload to Azure Blob Storage: {e}. Falling back to local save.")
 
-        # Local private filesystem storage
+        if is_prod:
+            raise RuntimeError(
+                "Cannot save file: Storage service is not connected to Azure Blob Storage in production."
+            )
+
+        # Local private filesystem storage (development/testing only)
         local_path = UPLOAD_DIR / storage_key
         local_path.write_bytes(file_bytes)
         return {
@@ -157,24 +182,56 @@ class StorageService:
 
         return False
 
-    def delete_assessment_files(self, assessment: dict, image_records: list) -> int:
-        """Clean up all image artifacts associated with an assessment."""
-        deleted_count = 0
+    def delete_assessment_files(self, assessment: dict, image_records: list) -> Dict[str, Any]:
+        """Clean up all image artifacts associated with an assessment.
+        
+        Returns a structured deletion audit report:
+        - total_expected: total unique file paths targeted
+        - deleted_count: number of files successfully deleted
+        - failed_paths: list of paths that failed deletion
+        - success: boolean indicating if all targeted files were deleted
+        """
+        target_paths = set()
 
         # 1. From assessment session document
         images = assessment.get("images", {})
-        for _, view_data in images.items():
-            file_path = view_data.get("file_path")
-            if file_path and self.delete_file(file_path):
-                deleted_count += 1
+        if isinstance(images, dict):
+            for _, view_data in images.items():
+                if isinstance(view_data, dict):
+                    fp = view_data.get("file_path")
+                    if fp:
+                        target_paths.add(fp)
 
         # 2. From assessment_images collection records
-        for img_rec in image_records:
-            rec_path = img_rec.get("file_path")
-            if rec_path and self.delete_file(rec_path):
-                deleted_count += 1
+        if isinstance(image_records, list):
+            for img_rec in image_records:
+                if isinstance(img_rec, dict):
+                    rec_path = img_rec.get("file_path")
+                    if rec_path:
+                        target_paths.add(rec_path)
 
-        return deleted_count
+        deleted_count = 0
+        failed_paths = []
+        for path in target_paths:
+            if self.delete_file(path):
+                deleted_count += 1
+            else:
+                failed_paths.append(path)
+
+        success = len(failed_paths) == 0
+        if failed_paths:
+            logger.warning(
+                f"Failed to delete {len(failed_paths)} / {len(target_paths)} files: {failed_paths}"
+            )
+        else:
+            logger.info(f"Successfully deleted all {deleted_count} assessment image files.")
+
+        return {
+            "total_expected": len(target_paths),
+            "deleted_count": deleted_count,
+            "failed_paths": failed_paths,
+            "success": success,
+        }
 
 
 # Global singleton storage service instance

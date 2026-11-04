@@ -5,6 +5,9 @@ import cv2
 import numpy as np
 from bson import ObjectId
 
+from typing import Optional, Dict, Any
+from pymongo import ReturnDocument
+
 from app.config.database import database
 from app.schemas.assessment import AssessmentCreate
 from app.ml.quality.image_quality import check_image_quality
@@ -14,14 +17,41 @@ from app.ml.xai.gradcam import generate_gradcam
 from app.services.storage_service import storage_service
 
 
+def get_next_assessment_sequence(user_id: Optional[str]) -> int:
+    """Atomically increment and return the next sequential assessment number.
+
+    Uses find_one_and_update on user_assessment_sequences collection.
+    Guarantees strictly monotonic sequential numbering without race conditions under concurrency
+    and prevents duplicate numbering when previous assessments are deleted.
+    """
+    key = str(user_id) if user_id else "anonymous"
+
+    # For existing accounts before sequence collection initialization:
+    # Set initial value to current maximum count if not yet seeded
+    existing_seq = database.user_assessment_sequences.find_one({"user_id": key})
+    if existing_seq is None:
+        existing_count = database.assessment_sessions.count_documents({"user_id": user_id})
+        database.user_assessment_sequences.update_one(
+            {"user_id": key},
+            {"$setOnInsert": {"next_number": existing_count}},
+            upsert=True,
+        )
+
+    seq_doc = database.user_assessment_sequences.find_one_and_update(
+        {"user_id": key},
+        {"$inc": {"next_number": 1}},
+        upsert=True,
+        return_document=ReturnDocument.AFTER,
+    )
+    return int(seq_doc["next_number"])
+
+
 def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
     now = datetime.now(timezone.utc)
     consented_at = data.consented_at or now
 
-    # Determine persistent sequential assessment number for this user
-    count_query = {"user_id": user_id}
-    prior_count = database.assessment_sessions.count_documents(count_query)
-    assessment_number = prior_count + 1
+    # Atomically assign next persistent sequence number
+    assessment_number = get_next_assessment_sequence(user_id)
     default_name = f"Assessment {assessment_number}"
 
     assessment_document = {
@@ -43,6 +73,36 @@ def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
     )
 
     return str(result.inserted_id)
+
+
+def abandon_assessment(assessment_id: str, user_id: Optional[str] = None) -> bool:
+    """Mark an incomplete assessment as abandoned and purge partial image artifacts."""
+    try:
+        object_id = ObjectId(assessment_id)
+    except Exception:
+        return False
+
+    existing = database.assessment_sessions.find_one({"_id": object_id})
+    if not existing:
+        return False
+
+    if user_id and existing.get("user_id") and str(existing["user_id"]) != str(user_id):
+        return False
+
+    # Completed assessments cannot be abandoned (they must be deleted)
+    if existing.get("status") in ("analyzed", "completed"):
+        return False
+
+    image_records = list(database.assessment_images.find({"assessment_id": object_id}))
+    storage_service.delete_assessment_files(existing, image_records)
+    database.assessment_images.delete_many({"assessment_id": object_id})
+
+    now = datetime.now(timezone.utc)
+    database.assessment_sessions.update_one(
+        {"_id": object_id},
+        {"$set": {"status": "abandoned", "images": {}, "updated_at": now}}
+    )
+    return True
 
 
 def get_assessment(assessment_id: str):

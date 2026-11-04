@@ -164,3 +164,24 @@ def test_storage_and_physical_deletion_cleanup():
 
     # Verify physical file was unlinked
     assert not dummy_file.exists(), "Associated image files must be deleted when the assessment is deleted"
+
+
+def test_private_cache_control_and_security_headers():
+    """Verify that private sensitive endpoints enforce anti-caching and security headers."""
+    headers = _get_auth_headers()
+
+    # 1. /auth/me must have private, no-store cache-control and security headers
+    resp = client.get("/api/v1/auth/me", headers=headers)
+    assert resp.status_code == 200
+    cache_control = resp.headers.get("Cache-Control", "")
+    assert "private" in cache_control
+    assert "no-store" in cache_control
+    assert resp.headers.get("X-Content-Type-Options") == "nosniff"
+    assert resp.headers.get("X-Frame-Options") == "DENY"
+
+    # 2. /assessments/history must have private, no-store cache-control
+    hist_resp = client.get("/api/v1/assessments/history", headers=headers)
+    assert hist_resp.status_code == 200
+    hist_cc = hist_resp.headers.get("Cache-Control", "")
+    assert "private" in hist_cc
+    assert "no-store" in hist_cc

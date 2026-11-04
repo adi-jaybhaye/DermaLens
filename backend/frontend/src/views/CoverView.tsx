@@ -974,7 +974,7 @@ const AboutModal: React.FC<{ isOpen: boolean; onClose: () => void; onExploreKnow
           color: '#5A524C',
           margin: '0 0 16px 0',
         }}>
-          DermaLens is an intelligent facial skin wellness assessment platform. Using multi-angle computer vision and explainable AI algorithms, it analyzes visible patterns such as skin hydration, oil distribution, redness, and textural harmony.
+          DermaLens is an intelligent facial skin wellness assessment platform. Using multi-angle computer vision and explainable AI algorithms, it analyzes 8 visible skin concerns including redness, acne, dark spots, pores, and wrinkles.
         </p>
 
         <p style={{

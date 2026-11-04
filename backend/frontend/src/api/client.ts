@@ -172,9 +172,14 @@ export interface SourceItem {
   related_concerns: string[];
 }
 
+let inMemoryToken: string | null = null;
+
+export function setInMemoryToken(token: string | null): void {
+  inMemoryToken = token;
+}
+
 function getAuthHeader(): Record<string, string> {
-  const token = localStorage.getItem('derma_token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return inMemoryToken ? { Authorization: `Bearer ${inMemoryToken}` } : {};
 }
 
 function parseErrorMessage(errDetail: unknown, fallback: string): string {
@@ -201,6 +206,7 @@ export const api = {
   async register(email: string, password: string, full_name?: string): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, full_name }),
     });
@@ -209,13 +215,14 @@ export const api = {
       throw new Error(parseErrorMessage(err.detail, 'Registration failed'));
     }
     const data = await res.json();
-    localStorage.setItem('derma_token', data.access_token);
+    inMemoryToken = data.access_token || null;
     return data;
   },
 
   async login(email: string, password: string): Promise<AuthResponse> {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
     });
@@ -224,31 +231,43 @@ export const api = {
       throw new Error(parseErrorMessage(err.detail, 'Login failed'));
     }
     const data = await res.json();
-    localStorage.setItem('derma_token', data.access_token);
+    inMemoryToken = data.access_token || null;
     return data;
   },
 
-  logout(): void {
-    localStorage.removeItem('derma_token');
+  async logout(): Promise<void> {
+    inMemoryToken = null;
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Ignore network errors during logout
+    }
   },
 
   async getMe(): Promise<User | null> {
-    const token = localStorage.getItem('derma_token');
-    if (!token) return null;
-    const res = await fetch(`${API_BASE}/auth/me`, {
-      headers: getAuthHeader(),
-    });
-    if (!res.ok) {
-      localStorage.removeItem('derma_token');
+    try {
+      const res = await fetch(`${API_BASE}/auth/me`, {
+        credentials: 'include',
+        headers: getAuthHeader(),
+      });
+      if (!res.ok) {
+        inMemoryToken = null;
+        return null;
+      }
+      return await res.json();
+    } catch {
       return null;
     }
-    return res.json();
   },
 
   // Assessments
   async createAssessment(capture_type = 'upload', views: string[] = ['front', 'left', 'right'], capture_modes?: Record<string, string>) {
     const res = await fetch(`${API_BASE}/assessments`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader(),
@@ -267,6 +286,7 @@ export const api = {
     formData.append('file', file);
     const res = await fetch(`${API_BASE}/assessments/${assessmentId}/images?view=${view}`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAuthHeader(),
       body: formData,
     });
@@ -280,6 +300,7 @@ export const api = {
   async triggerAnalysis(assessmentId: string) {
     const res = await fetch(`${API_BASE}/assessments/${assessmentId}/analyze`, {
       method: 'POST',
+      credentials: 'include',
       headers: getAuthHeader(),
     });
     if (!res.ok) {
@@ -289,8 +310,22 @@ export const api = {
     return res.json();
   },
 
+  async abandonAssessment(assessmentId: string): Promise<{ message: string; assessment_id: string; status: string }> {
+    const res = await fetch(`${API_BASE}/assessments/${assessmentId}/abandon`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeader(),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: 'Failed to abandon assessment' }));
+      throw new Error(err.detail || 'Failed to abandon assessment');
+    }
+    return res.json();
+  },
+
   async getResults(assessmentId: string): Promise<AssessmentResults> {
     const res = await fetch(`${API_BASE}/assessments/${assessmentId}/results`, {
+      credentials: 'include',
       headers: getAuthHeader(),
     });
     if (!res.ok) {
@@ -302,6 +337,7 @@ export const api = {
 
   async getAssessmentHistory(): Promise<AssessmentHistoryItem[]> {
     const res = await fetch(`${API_BASE}/assessments/history`, {
+      credentials: 'include',
       headers: getAuthHeader(),
     });
     if (!res.ok) return [];
@@ -311,6 +347,7 @@ export const api = {
   async renameAssessment(assessmentId: string, name: string): Promise<{ message: string; assessment_id: string; name: string }> {
     const res = await fetch(`${API_BASE}/assessments/${assessmentId}/rename`, {
       method: 'PATCH',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...getAuthHeader(),
@@ -327,6 +364,7 @@ export const api = {
   async deleteAssessment(assessmentId: string): Promise<{ message: string; assessment_id: string }> {
     const res = await fetch(`${API_BASE}/assessments/${assessmentId}`, {
       method: 'DELETE',
+      credentials: 'include',
       headers: getAuthHeader(),
     });
     if (!res.ok) {
@@ -338,21 +376,27 @@ export const api = {
 
   // Knowledge & Sources
   async getKnowledge(): Promise<ConcernKnowledge[]> {
-    const res = await fetch(`${API_BASE}/knowledge`);
+    const res = await fetch(`${API_BASE}/knowledge`, {
+      credentials: 'include',
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data.concerns || [];
   },
 
   async getSources(): Promise<SourceItem[]> {
-    const res = await fetch(`${API_BASE}/sources`);
+    const res = await fetch(`${API_BASE}/sources`, {
+      credentials: 'include',
+    });
     if (!res.ok) return [];
     const data = await res.json();
     return data.sources || [];
   },
 
   async getSafety() {
-    const res = await fetch(`${API_BASE}/safety`);
+    const res = await fetch(`${API_BASE}/safety`, {
+      credentials: 'include',
+    });
     if (!res.ok) return null;
     return res.json();
   },
@@ -362,6 +406,8 @@ export const api = {
     formData.append('file', file);
     const res = await fetch(`${API_BASE}/xai/gradcam`, {
       method: 'POST',
+      credentials: 'include',
+      headers: getAuthHeader(),
       body: formData,
     });
     if (!res.ok) {

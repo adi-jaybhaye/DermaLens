@@ -12,6 +12,7 @@ from app.services.assessment_service import (
     delete_assessment,
     rename_assessment,
     analyze_assessment,
+    abandon_assessment,
 )
 from app.api.deps import get_current_user, verify_assessment_ownership
 from app.utils.rate_limiter import api_limiter
@@ -197,6 +198,45 @@ def get_status(
     }
 
 
+@router.post("/assessments/{assessment_id}/abandon")
+def abandon_assessment_route(
+    assessment_id: str,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Mark an incomplete assessment as abandoned and purge partial image artifacts."""
+    api_limiter.check(request)
+
+    if not ObjectId.is_valid(assessment_id):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid assessment ID",
+        )
+
+    assessment = database.assessment_sessions.find_one(
+        {"_id": ObjectId(assessment_id)}
+    )
+    if assessment is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Assessment not found",
+        )
+
+    verify_assessment_ownership(assessment, current_user)
+
+    success = abandon_assessment(assessment_id, user_id=current_user["id"])
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Could not abandon assessment. Ensure the assessment exists and is not already completed.",
+        )
+    return {
+        "message": "Assessment successfully marked as abandoned and temporary artifacts purged",
+        "assessment_id": assessment_id,
+        "status": "abandoned",
+    }
+
+
 @router.post("/assessments/{assessment_id}/analyze")
 def trigger_analysis(
     assessment_id: str,
@@ -228,6 +268,17 @@ def trigger_analysis(
         result = analyze_assessment(assessment_id)
 
         if not result.get("success"):
+            from datetime import datetime, timezone
+            database.assessment_sessions.update_one(
+                {"_id": ObjectId(assessment_id)},
+                {
+                    "$set": {
+                        "status": "failed",
+                        "last_error": result.get("reason", "Analysis failed"),
+                        "updated_at": datetime.now(timezone.utc),
+                    }
+                },
+            )
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=result.get(
@@ -243,6 +294,17 @@ def trigger_analysis(
 
     except Exception as exc:
         logger.error(f"Analysis failed for assessment {assessment_id}: {exc}", exc_info=True)
+        from datetime import datetime, timezone
+        database.assessment_sessions.update_one(
+            {"_id": ObjectId(assessment_id)},
+            {
+                "$set": {
+                    "status": "failed",
+                    "last_error": "Internal error during analysis",
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Assessment analysis failed. Please try again.",

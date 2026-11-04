@@ -126,12 +126,18 @@ def test_auth_flow():
     me_data = me_resp.json()
     assert me_data["email"] == test_email
 
-    # 6. Get profile without token fails
+    # 6. Logout clears session cookie
+    logout_resp = client.post("/api/v1/auth/logout")
+    assert logout_resp.status_code == 200
+
+    # 7. Get profile without token/cookie fails with 401
+    client.cookies.clear()
     unauth_resp = client.get("/api/v1/auth/me")
     assert unauth_resp.status_code == 401
 
 
 def test_unauthenticated_assessment_access_rejected():
+    client.cookies.clear()
     # 1. Unauthenticated creation is rejected with 401
     create_resp = client.post(
         "/api/v1/assessments",

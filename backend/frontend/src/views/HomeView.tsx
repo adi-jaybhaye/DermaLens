@@ -357,7 +357,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               Begin Your First Multi-Perspective Skin Assessment
             </h4>
             <p style={{ fontSize: 13.5, color: 'var(--color-muted)', lineHeight: 1.55, margin: 0 }}>
-              Takes approximately 2 minutes in even natural daylight. Evaluates hydration patterns, oil distribution, redness, and textural harmony without clinical claims.
+              Takes approximately 2 minutes in even natural daylight. Evaluates 8 visible skin concerns including redness, acne, dark spots, pores, and wrinkles without clinical claims.
             </p>
           </div>
 

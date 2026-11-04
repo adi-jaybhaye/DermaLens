@@ -141,7 +141,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
             {formatCaptureBadge(results.capture_type, results.capture_modes)}
           </div>
           <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>
-            Standardized optical capture
+            Guided multi-angle capture
           </div>
         </div>
 
@@ -284,7 +284,7 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
           gap: 6,
         }}>
           <ShieldCheckIcon size={14} color="var(--color-sage)" />
-          <span>Validated Analysis Process &bull; Explainability Pipeline</span>
+          <span>Structured Analysis Pipeline &bull; Explainability Process</span>
         </div>
 
         <div style={{

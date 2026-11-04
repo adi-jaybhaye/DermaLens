@@ -1,5 +1,6 @@
 import logging
-from fastapi import APIRouter, HTTPException, Depends, Request, status
+from fastapi import APIRouter, HTTPException, Depends, Request, Response, status
+from app.config.settings import settings
 from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
 from app.services.auth_service import (
     register_user,
@@ -14,9 +15,35 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def _set_auth_cookie(response: Response, token: str) -> None:
+    is_prod = settings.environment.lower() == "production"
+    cookie_max_age = settings.jwt_access_token_expire_minutes * 60
+    response.set_cookie(
+        key=settings.cookie_name,
+        value=token,
+        max_age=cookie_max_age,
+        expires=cookie_max_age,
+        httponly=True,
+        secure=is_prod,
+        samesite=settings.cookie_samesite,
+        path="/",
+    )
+
+
+def _clear_auth_cookie(response: Response) -> None:
+    is_prod = settings.environment.lower() == "production"
+    response.delete_cookie(
+        key=settings.cookie_name,
+        path="/",
+        httponly=True,
+        secure=is_prod,
+        samesite=settings.cookie_samesite,
+    )
+
+
 @router.post("/auth/register", response_model=TokenResponse)
-def register(user_data: UserCreate, request: Request):
-    """Register a new user account with Argon2id password hashing."""
+def register(user_data: UserCreate, request: Request, response: Response):
+    """Register a new user account with Argon2id password hashing and set HttpOnly session cookie."""
     auth_limiter.check(request)
 
     result = register_user(user_data)
@@ -34,6 +61,7 @@ def register(user_data: UserCreate, request: Request):
 
     user = result["user"]
     token = create_access_token(user_id=user["id"], email=user["email"])
+    _set_auth_cookie(response, token)
 
     return TokenResponse(
         access_token=token,
@@ -43,8 +71,8 @@ def register(user_data: UserCreate, request: Request):
 
 
 @router.post("/auth/login", response_model=TokenResponse)
-def login(credentials: UserLogin, request: Request):
-    """Authenticate user credentials and return signed JWT."""
+def login(credentials: UserLogin, request: Request, response: Response):
+    """Authenticate user credentials, set HttpOnly session cookie, and return signed JWT."""
     auth_limiter.check(request)
 
     try:
@@ -67,6 +95,7 @@ def login(credentials: UserLogin, request: Request):
         )
 
     token = create_access_token(user_id=user["id"], email=user["email"])
+    _set_auth_cookie(response, token)
 
     return TokenResponse(
         access_token=token,
@@ -75,10 +104,10 @@ def login(credentials: UserLogin, request: Request):
     )
 
 
-
 @router.post("/auth/logout")
-def logout():
-    """Client-side token disposal endpoint."""
+def logout(response: Response):
+    """Log out user by clearing the secure HttpOnly session cookie."""
+    _clear_auth_cookie(response)
     return {"message": "Logged out successfully"}
 
 
@@ -96,12 +125,13 @@ def get_profile(current_user: dict = Depends(get_current_user)):
 
 
 @router.delete("/auth/me")
-def delete_account(current_user: dict = Depends(get_current_user)):
-    """Permanently delete user account and wipe all associated biometric assessment data."""
-    result = delete_user_account(current_user["id"])
-    if not result.get("success"):
+def delete_account(response: Response, current_user: dict = Depends(get_current_user)):
+    """Permanently delete user account, clear session cookie, and wipe all associated biometric assessment data."""
+    _clear_auth_cookie(response)
+    success = delete_user_account(current_user["id"])
+    if not success:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("reason", "Account deletion failed"),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to completely purge user account",
         )
     return {"message": "Account and all associated biometric records permanently deleted"}
