@@ -18,29 +18,43 @@ try:
 except Exception as e:
     logger.debug(f"Could not adjust DNS resolver nameservers: {e}")
 
+
 def _init_mongo_client() -> MongoClient:
-    """Initialize MongoClient with SRV resolution and resilient direct cluster fallback."""
+    """Initialize MongoClient with adaptive TLS, SRV resolution, and resilient direct cluster fallback."""
+    uri = settings.mongodb_uri
+    is_srv = uri.startswith("mongodb+srv://")
+    has_tls = is_srv or "tls=true" in uri.lower() or "ssl=true" in uri.lower()
+
+    client_kwargs = {
+        "serverSelectionTimeoutMS": 5000,
+        "connectTimeoutMS": 5000,
+    }
+    if has_tls:
+        client_kwargs["tls"] = True
+        client_kwargs["tlsCAFile"] = certifi.where()
+
     try:
-        c = MongoClient(
-            settings.mongodb_uri,
-            tls=True,
-            tlsCAFile=certifi.where(),
-            serverSelectionTimeoutMS=5000,
-            connectTimeoutMS=5000,
-        )
+        c = MongoClient(uri, **client_kwargs)
         return c
     except (ConfigurationError, PyMongoError) as exc:
         if settings.mongodb_direct_fallback_uri:
             logger.warning(
-                f"Failed to connect via SRV URI ({exc}). Attempting direct replica-set cluster connection from settings..."
+                f"Failed to connect via primary URI ({exc}). Attempting direct replica-set cluster connection from settings..."
             )
-            return MongoClient(
-                settings.mongodb_direct_fallback_uri,
-                tls=True,
-                tlsCAFile=certifi.where(),
-                serverSelectionTimeoutMS=5000,
-                connectTimeoutMS=5000,
+            fallback_uri = settings.mongodb_direct_fallback_uri
+            fallback_has_tls = (
+                fallback_uri.startswith("mongodb+srv://")
+                or "tls=true" in fallback_uri.lower()
+                or "ssl=true" in fallback_uri.lower()
             )
+            fb_kwargs = {
+                "serverSelectionTimeoutMS": 5000,
+                "connectTimeoutMS": 5000,
+            }
+            if fallback_has_tls:
+                fb_kwargs["tls"] = True
+                fb_kwargs["tlsCAFile"] = certifi.where()
+            return MongoClient(fallback_uri, **fb_kwargs)
         raise exc
 
 
@@ -71,4 +85,3 @@ def init_db_indexes() -> None:
         logger.info("MongoDB indexes verified successfully.")
     except Exception as e:
         logger.warning(f"Could not initialize MongoDB indexes: {e}")
-
