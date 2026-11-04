@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <mask id="sageCircleMask">
+      <rect width="100%" height="100%" fill="white"/>
+      <path d="M 198 300 C 285 222, 350 145, 412 92" 
+        stroke="black" stroke-width="4.5" stroke-linecap="round" fill="none" />
+    </mask>
+  </defs>
+
+  <!-- Circular Badge (Muted Sage #8E9E8F) -->
+  <circle cx="256" cy="256" r="256" fill="#8E9E8F"/>
+
+  <!-- Centered White Monogram -->
+  <g transform="translate(68, 54) scale(0.75)" fill="#FFFFFF">
+    <path d="M 60 70 H 116 V 450 H 60 C 78 450, 86 438, 86 415 V 105 C 86 82, 78 70, 60 70 Z" />
+    <path d="M 116 70 H 175 C 255 70, 355 90, 396 168 C 424 220, 424 308, 396 360 C 362 422, 298 450, 230 450 H 215 C 272 450, 332 418, 354 354 C 374 312, 374 216, 352 176 C 320 120, 250 102, 175 102 H 116 Z" />
+    <path d="M 136 106 H 214 C 196 106, 190 116, 190 134 V 315 H 160 V 134 C 160 116, 154 106, 136 106 Z" />
+    <path d="M 160 305 H 190 V 418 H 385 C 410 418, 422 400, 432 360 H 440 L 435 450 H 150 C 158 450, 160 440, 160 418 Z" />
+    <path d="M 172 445 C 174 405, 180 355, 198 300 C 200 294, 203 295, 202 301 C 186 358, 178 406, 175 445 Z" />
+    <path mask="url(#sageCircleMask)" d="
+      M 198 300 
+      C 175 220, 240 145, 412 92 
+      C 392 188, 330 274, 198 300 
+      Z" />
+  </g>
+</svg>

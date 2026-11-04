@@ -11,6 +11,7 @@ from app.ml.quality.image_quality import check_image_quality
 from app.ml.face.face_processor import detect_face, extract_face_regions
 from app.ml.skin.skin_analyzer import analyze_skin_regions
 from app.ml.xai.gradcam import generate_gradcam
+from app.services.storage_service import storage_service
 
 
 def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
@@ -163,31 +164,11 @@ def delete_assessment(assessment_id: str, user_id: str = None) -> bool:
     if user_id and existing.get("user_id") and str(existing["user_id"]) != str(user_id):
         return False
 
-    # 1. Clean up physical image files from session document
-    images = existing.get("images", {})
-    for view_name, view_data in images.items():
-        file_path_str = view_data.get("file_path")
-        if file_path_str:
-            try:
-                p = Path(file_path_str)
-                if p.exists() and p.is_file():
-                    p.unlink()
-            except Exception:
-                pass
+    # 1. Clean up physical image files from session document & assessment_images collection
+    image_records = list(database.assessment_images.find({"assessment_id": object_id}))
+    storage_service.delete_assessment_files(existing, image_records)
 
-    # 2. Clean up any physical files recorded in assessment_images collection
-    image_records = database.assessment_images.find({"assessment_id": object_id})
-    for img_rec in image_records:
-        rec_path_str = img_rec.get("file_path")
-        if rec_path_str:
-            try:
-                p = Path(rec_path_str)
-                if p.exists() and p.is_file():
-                    p.unlink()
-            except Exception:
-                pass
-
-    # 3. Delete database records
+    # 2. Delete database records
     database.assessment_images.delete_many({"assessment_id": object_id})
     result = database.assessment_sessions.delete_one({"_id": object_id})
 
@@ -347,12 +328,13 @@ def analyze_assessment(assessment_id: str) -> dict:
             continue
 
         file_path = view_data.get("file_path")
-
-        if not file_path or not Path(file_path).exists():
+        if not file_path:
             continue
 
-        # Load original image
-        image_bytes = Path(file_path).read_bytes()
+        try:
+            image_bytes = storage_service.read_file(file_path)
+        except Exception:
+            continue
 
         # Get stored region coordinates
         face_regions = view_data.get("face_regions", {})

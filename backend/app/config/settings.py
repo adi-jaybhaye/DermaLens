@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     mongodb_uri: str
+    mongodb_direct_fallback_uri: str = ""
     mongodb_database: str = "face_skin_assessment"
 
     # JWT Authentication

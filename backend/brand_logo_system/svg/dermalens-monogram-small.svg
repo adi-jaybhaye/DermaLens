@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Solid/Bold Terracotta for small sizes to prevent muddy gradients -->
+    <linearGradient id="dl-terracotta-sm" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D9B7AD"/>
+      <stop offset="100%" stop-color="#C47A65"/>
+    </linearGradient>
+
+    <!-- Leaf Tones -->
+    <linearGradient id="dl-leaf-light-sm" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8E9E8F"/>
+      <stop offset="100%" stop-color="#A5B8A6"/>
+    </linearGradient>
+    <linearGradient id="dl-leaf-dark-sm" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#768777"/>
+      <stop offset="100%" stop-color="#8E9E8F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="100%" height="100%" fill="none"/>
+
+  <!-- Optically adjusted for 24px, 32px, 48px icon clarity -->
+  <g id="dermalens-monogram-small" transform="translate(40, 18) scale(0.92)">
+    <!-- 1. 'D' LEFT STEM (Bolder serifs & stroke) -->
+    <path id="stem-d" d="
+      M 56 68 
+      H 118 
+      V 452 
+      H 56 
+      C 78 452, 88 438, 88 412 
+      V 108 
+      C 88 82, 78 68, 56 68 
+      Z" 
+      fill="url(#dl-terracotta-sm)" />
+
+    <!-- 2. 'D' CURVED BOWL (Optimized counter thickness) -->
+    <path id="bowl-d" d="
+      M 118 68 
+      H 178 
+      C 260 68, 360 88, 402 168 
+      C 432 220, 432 308, 402 360 
+      C 366 424, 300 452, 230 452 
+      H 212 
+      C 275 452, 335 418, 356 354 
+      C 376 312, 376 216, 354 176 
+      C 322 120, 252 102, 178 102 
+      H 118 
+      Z" 
+      fill="#3A332F" />
+
+    <!-- 3. INNER 'L' VERTICAL STEM -->
+    <path id="inner-stem-l" d="
+      M 134 104 
+      H 218 
+      C 198 104, 192 114, 192 134 
+      V 315 
+      H 160 
+      V 134 
+      C 160 114, 154 104, 134 104 
+      Z" 
+      fill="#3A332F" />
+
+    <!-- 4. 'L' EXTENDED FOOT (Clear upward terminal) -->
+    <path id="foot-l" d="
+      M 160 305 
+      H 192 
+      V 416 
+      H 385 
+      C 412 416, 425 398, 435 358 
+      H 445 
+      L 438 452 
+      H 148 
+      C 158 452, 160 440, 160 416 
+      Z" 
+      fill="url(#dl-terracotta-sm)" />
+
+    <!-- 5. BOTANICAL LEAF STEM -->
+    <path id="leaf-stem" d="
+      M 172 445 
+      C 174 405, 180 355, 198 300 
+      C 201 292, 206 293, 204 301 
+      C 186 358, 178 406, 175 445 
+      Z" 
+      fill="#3A332F" />
+
+    <!-- 6. BOTANICAL LEAF (Slightly punchier silhouette for small sizes) -->
+    <path id="leaf-top" d="
+      M 198 300 
+      C 172 216, 238 140, 416 88 
+      C 350 144, 282 220, 198 300 
+      Z" 
+      fill="url(#dl-leaf-light-sm)" />
+
+    <path id="leaf-bottom" d="
+      M 198 300 
+      C 282 220, 350 144, 416 88 
+      C 395 190, 332 276, 198 300 
+      Z" 
+      fill="url(#dl-leaf-dark-sm)" />
+
+    <path id="leaf-spine" d="
+      M 198 300 
+      C 282 220, 350 144, 416 88
+      " 
+      stroke="#FFFFFF" 
+      stroke-width="3.8" 
+      stroke-linecap="round" 
+      fill="none" />
+  </g>
+</svg>

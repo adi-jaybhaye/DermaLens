@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" width="100%" height="100%">
+  <defs>
+    <!-- Brand Terracotta Gradient -->
+    <linearGradient id="dl-terracotta-horiz" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D9B7AD"/>
+      <stop offset="50%" stop-color="#C87B66"/>
+      <stop offset="100%" stop-color="#B76B56"/>
+    </linearGradient>
+
+    <!-- Leaf Tones -->
+    <linearGradient id="dl-leaf-light-horiz" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8E9E8F"/>
+      <stop offset="100%" stop-color="#A5B8A6"/>
+    </linearGradient>
+    <linearGradient id="dl-leaf-dark-horiz" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#768777"/>
+      <stop offset="100%" stop-color="#8E9E8F"/>
+    </linearGradient>
+
+    <!-- Leaf Elevation Shadow -->
+    <filter id="leafShadowHoriz" x="-15%" y="-15%" width="135%" height="135%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2.5" flood-color="#3A332F" flood-opacity="0.12"/>
+    </filter>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Outfit:wght@500;600&amp;display=swap');
+      .wordmark-derma-h {
+        font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+        font-size: 64px;
+        font-weight: 700;
+        fill: #3A332F;
+        letter-spacing: -0.5px;
+      }
+      .wordmark-lens-h {
+        font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+        font-size: 64px;
+        font-weight: 700;
+        fill: url(#dl-terracotta-horiz);
+        letter-spacing: -0.5px;
+      }
+      .tagline-text-h {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 12.5px;
+        font-weight: 600;
+        fill: #3A332F;
+        letter-spacing: 5px;
+        text-transform: uppercase;
+        opacity: 0.88;
+      }
+    </style>
+  </defs>
+
+  <rect width="100%" height="100%" fill="none"/>
+
+  <!-- 1. Monogram Crest (Left) -->
+  <g id="dermalens-monogram" transform="translate(18, 14) scale(0.31)">
+    <!-- 'D' Left Vertical Stem -->
+    <path d="M 60 70 H 116 V 450 H 60 C 78 450, 86 438, 86 415 V 105 C 86 82, 78 70, 60 70 Z" 
+      fill="url(#dl-terracotta-horiz)" />
+
+    <!-- 'D' Curved Bowl -->
+    <path d="M 116 70 H 175 C 255 70, 355 90, 396 168 C 424 220, 424 308, 396 360 C 362 422, 298 450, 230 450 H 215 C 272 450, 332 418, 354 354 C 374 312, 374 216, 352 176 C 320 120, 250 102, 175 102 H 116 Z" 
+      fill="#3A332F" />
+
+    <!-- Inner 'L' Upper Stem -->
+    <path d="M 136 106 H 214 C 196 106, 190 116, 190 134 V 315 H 160 V 134 C 160 116, 154 106, 136 106 Z" 
+      fill="#3A332F" />
+
+    <!-- 'L' Extended Foot -->
+    <path d="M 160 305 H 190 V 418 H 385 C 410 418, 422 400, 432 360 H 440 L 435 450 H 150 C 158 450, 160 440, 160 418 Z" 
+      fill="url(#dl-terracotta-horiz)" />
+
+    <!-- Botanical Leaf Stem -->
+    <path d="M 172 445 C 174 405, 180 355, 198 300 C 200 294, 203 295, 202 301 C 186 358, 178 406, 175 445 Z" 
+      fill="#3A332F" />
+
+    <!-- Botanical Leaf -->
+    <g filter="url(#leafShadowHoriz)">
+      <path d="M 198 300 C 175 220, 240 145, 412 92 C 350 145, 285 222, 198 300 Z" 
+        fill="url(#dl-leaf-light-horiz)" />
+      <path d="M 198 300 C 285 222, 350 145, 412 92 C 392 188, 330 274, 198 300 Z" 
+        fill="url(#dl-leaf-dark-horiz)" />
+      <path d="M 198 300 C 285 222, 350 145, 412 92" 
+        stroke="#F9F6F1" stroke-width="2.6" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+
+  <!-- Divider Line (Subtle Luxury Line) -->
+  <line x1="180" y1="36" x2="180" y2="124" stroke="#E6DDD4" stroke-width="1.2" />
+
+  <!-- 2. DermaLens Wordmark (Right) -->
+  <g transform="translate(208, 92)">
+    <text>
+      <tspan class="wordmark-derma-h">Derma</tspan><tspan class="wordmark-lens-h">Lens</tspan>
+    </text>
+  </g>
+
+  <!-- 3. Tagline (Right) -->
+  <g transform="translate(212, 126)">
+    <text class="tagline-text-h">SEE SKIN DIFFERENTLY</text>
+  </g>
+</svg>

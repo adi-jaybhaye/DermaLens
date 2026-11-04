@@ -29,16 +29,12 @@ export const KnowledgeView: React.FC = () => {
     );
   }, [concerns, searchQuery]);
 
-  // Keep selected concept valid when filtering
-  useEffect(() => {
-    if (filteredConcerns.length > 0) {
-      if (!filteredConcerns.some((c) => c.concept === selectedConcept)) {
-        setSelectedConcept(filteredConcerns[0].concept);
-      }
-    }
-  }, [filteredConcerns, selectedConcept]);
+  // Compute active concept dynamically to avoid cascading effect renders
+  const currentConcept = filteredConcerns.some((c) => c.concept === selectedConcept)
+    ? selectedConcept
+    : (filteredConcerns[0]?.concept || selectedConcept);
 
-  const activeConcern = concerns.find((c) => c.concept === selectedConcept);
+  const activeConcern = concerns.find((c) => c.concept === currentConcept);
 
   return (
     <div style={{ maxWidth: 1140, margin: '0 auto', padding: '40px 20px 80px' }}>

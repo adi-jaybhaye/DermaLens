@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CameraIcon, UploadIcon, CheckCircleIcon, AlertCircleIcon, XIcon, RefreshIcon } from '../components/Icons';
 
 interface CaptureViewProps {
@@ -26,6 +26,29 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
   const streamRef = useRef<MediaStream | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch {
+      setCameraError('Camera access unavailable. Please use file upload.');
+      setUseCamera(false);
+    }
+  }, []);
+
   // Setup camera stream when toggled
   useEffect(() => {
     if (useCamera) {
@@ -36,30 +59,7 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
     return () => {
       stopCamera();
     };
-  }, [useCamera]);
-
-  const startCamera = async () => {
-    setCameraError(null);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
-    } catch (err: any) {
-      setCameraError('Camera access unavailable. Please use file upload.');
-      setUseCamera(false);
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-  };
+  }, [useCamera, startCamera, stopCamera]);
 
   const handleCaptureFromCamera = () => {
     if (!videoRef.current) return;
@@ -109,7 +109,9 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
         if (url && url.startsWith('blob:')) {
           try {
             URL.revokeObjectURL(url);
-          } catch (_) {}
+          } catch {
+            // ignore
+          }
         }
       });
     };
@@ -121,7 +123,9 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
     if (oldUrl && oldUrl.startsWith('blob:')) {
       try {
         URL.revokeObjectURL(oldUrl);
-      } catch (_) {}
+      } catch {
+        // ignore
+      }
     }
 
     setViewFiles((prev) => ({ ...prev, [view]: file }));
@@ -157,7 +161,9 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
     if (oldUrl && oldUrl.startsWith('blob:')) {
       try {
         URL.revokeObjectURL(oldUrl);
-      } catch (_) {}
+      } catch {
+        // ignore
+      }
     }
     setViewFiles((prev) => {
       const next = { ...prev };
@@ -447,7 +453,7 @@ export const CaptureView: React.FC<CaptureViewProps> = ({ onComplete, onBack }) 
                 <div
                   onClick={() => {
                     const [prevAngle] = Object.entries(viewPreviews).find(([v]) => v !== activeView)!;
-                    setActiveView(prevAngle as any);
+                    setActiveView(prevAngle as 'front' | 'left' | 'right');
                   }}
                   style={{
                     position: 'absolute',

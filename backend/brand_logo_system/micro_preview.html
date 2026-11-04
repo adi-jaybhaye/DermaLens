@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Exact Pixel Inspection of Reference Monogram</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #EFEBE5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      font-family: sans-serif;
+    }
+    .wrapper {
+      display: flex;
+      gap: 30px;
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+    }
+    .view-box {
+      width: 440px;
+      height: 480px;
+      background: #F9F6F1;
+      border: 1px solid #E2D9CF;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Perfect crop to the top-right "Logo Mark (Monogram)" */
+    .view-box img.ref {
+      position: absolute;
+      width: 460%;
+      top: -46%;
+      left: -294%;
+    }
+    .view-box .my-svg {
+      width: 90%;
+      height: 90%;
+    }
+  </style>
+</head>
+<body>
+  <h1>Micro-Level Alignment Comparison</h1>
+  <div class="wrapper">
+    <div>
+      <h3 style="text-align:center; color:#555;">Original Reference Monogram</h3>
+      <div class="view-box">
+        <img class="ref" src="file:///C:/Users/HP/.gemini/antigravity-ide/brain/1cb9bf70-a201-4a1b-9f81-8517aa1c6e18/.user_uploaded/media_1791981061033.jpg">
+      </div>
+    </div>
+    <div>
+      <h3 style="text-align:center; color:#555;">Vector SVG v3 Candidate</h3>
+      <div class="view-box">
+        <img class="my-svg" src="test_monogram.svg?v=3">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

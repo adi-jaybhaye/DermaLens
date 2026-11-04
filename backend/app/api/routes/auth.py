@@ -1,3 +1,4 @@
+import logging
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from app.schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse
 from app.services.auth_service import (
@@ -9,6 +10,7 @@ from app.services.auth_service import (
 from app.api.deps import get_current_user
 from app.utils.rate_limiter import auth_limiter
 
+logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -19,9 +21,15 @@ def register(user_data: UserCreate, request: Request):
 
     result = register_user(user_data)
     if not result.get("success"):
+        reason = result.get("reason", "Registration failed")
+        status_code = (
+            status.HTTP_503_SERVICE_UNAVAILABLE
+            if "database" in reason.lower()
+            else status.HTTP_400_BAD_REQUEST
+        )
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("reason", "Registration failed"),
+            status_code=status_code,
+            detail=reason,
         )
 
     user = result["user"]
@@ -39,10 +47,18 @@ def login(credentials: UserLogin, request: Request):
     """Authenticate user credentials and return signed JWT."""
     auth_limiter.check(request)
 
-    user = authenticate_user(
-        email=credentials.email,
-        password=credentials.password,
-    )
+    try:
+        user = authenticate_user(
+            email=credentials.email,
+            password=credentials.password,
+        )
+    except Exception as exc:
+        logger.error(f"Authentication database exception: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database service temporarily unavailable. Please try again.",
+        )
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -57,6 +73,7 @@ def login(credentials: UserLogin, request: Request):
         token_type="bearer",
         user=UserResponse(**user),
     )
+
 
 
 @router.post("/auth/logout")

@@ -260,6 +260,82 @@ export const ResultsDashboardView: React.FC<ResultsDashboardViewProps> = ({ resu
         </div>
       </div>
 
+      {/* Results Methodology Timeline (Section 19) */}
+      <div
+        className="glass-panel"
+        style={{
+          padding: '16px 20px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 'var(--radius-lg)',
+          marginBottom: 26,
+          border: '1px solid var(--color-border-light)',
+          boxShadow: 'var(--shadow-sm)',
+        }}
+      >
+        <div style={{
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: 'uppercase',
+          letterSpacing: '0.8px',
+          color: 'var(--color-muted)',
+          marginBottom: 12,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}>
+          <ShieldCheckIcon size={14} color="var(--color-sage)" />
+          <span>Validated Analysis Process &bull; Explainability Pipeline</span>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+          gap: 10,
+        }}>
+          {[
+            'Photo clarity checked',
+            'Face and landmarks detected',
+            'Facial regions identified',
+            'Visible patterns evaluated',
+            'Visual focus generated',
+            'Evidence-linked explanation prepared',
+          ].map((stage, idx) => (
+            <div
+              key={idx}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '8px 12px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: 'var(--color-surface-subtle)',
+                border: '1px solid var(--color-border-light)',
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'var(--color-mocha)',
+              }}
+            >
+              <div style={{
+                width: 16,
+                height: 16,
+                borderRadius: '50%',
+                backgroundColor: 'rgba(147, 162, 143, 0.25)',
+                color: 'var(--color-sage-dark)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                fontSize: 11,
+                fontWeight: 700,
+              }}>
+                ✓
+              </div>
+              <span style={{ lineHeight: 1.3 }}>{stage}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Grid: Left Column (Skin Type + Regions) & Right Column (XAI Visuals) */}
       <div className="results-grid-layout">
         {/* Left Column */}

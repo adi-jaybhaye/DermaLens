@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Full View Reference vs Vector</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      background: #EFEBE5;
+      font-family: sans-serif;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .view-box {
+      width: 100%;
+      height: 520px;
+      background: #F9F6F1;
+      border: 1px solid #E2D9CF;
+      border-radius: 12px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* Exactly crop to the top-right "Logo Mark (Monogram)" box (x: 63%, y: 6%, w: 34%, h: 28%) */
+    .view-box img.ref {
+      position: absolute;
+      width: 300%;
+      top: -26%;
+      left: -190%;
+    }
+    .view-box .my-svg {
+      width: 82%;
+      height: 82%;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin-top:0; color:#555;">Original Reference: Monogram</h3>
+      <div class="view-box">
+        <img class="ref" src="file:///C:/Users/HP/.gemini/antigravity-ide/brain/1cb9bf70-a201-4a1b-9f81-8517aa1c6e18/.user_uploaded/media_1791981061033.jpg">
+      </div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0; color:#555;">Vector SVG Monogram</h3>
+      <div class="view-box">
+        <img class="my-svg" src="test_monogram.svg?v=4">
+      </div>
+    </div>
+  </div>
+</body>
+</html>

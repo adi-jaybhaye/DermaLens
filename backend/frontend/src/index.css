@@ -542,18 +542,362 @@ input, select, textarea {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+/* ============================================================ */
+/* DERMALENS COVER PAGE (NATURE INSPIRED HERO)                  */
+/* ============================================================ */
+
+/* Entry Animations */
+/* ============================================================
+   STATIC NATURE INSPIRED COVER PAGE (Loop 0–Loop 26)
+   100% Static Implementation — Zero Motion — Reference-Accurate
+   ============================================================ */
+
+.cover-page-root {
+  background-color: #F7F4ED;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.cover-hero-fold {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #F7F4ED;
+  background-image: 
+    linear-gradient(to right, #F7F4ED 0%, #F7F4ED 32%, rgba(247, 244, 237, 0.92) 46%, rgba(247, 244, 237, 0) 68%),
+    url('/cover/botanical-hero.jpg');
+  background-position: right center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 960px) {
+  .cover-page-root {
+    background-color: #F7F4ED !important;
   }
+
+  .cover-hero-fold {
+    background-color: #F7F4ED !important;
+    background-image: 
+      linear-gradient(
+        180deg,
+        rgba(247, 244, 237, 0.95) 0%,
+        rgba(247, 244, 237, 0.88) 26%,
+        rgba(247, 244, 237, 0.52) 52%,
+        rgba(247, 244, 237, 0.76) 82%,
+        #F7F4ED 100%
+      ),
+      linear-gradient(
+        to right,
+        rgba(247, 244, 237, 0.92) 0%,
+        rgba(247, 244, 237, 0.70) 50%,
+        rgba(247, 244, 237, 0.20) 100%
+      ),
+      url('/cover/botanical-hero.jpg') !important;
+    background-position: 72% center !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+  }
+
+  .cover-navbar {
+    padding: 16px 20px !important;
+  }
+
+  .cover-desktop-nav {
+    display: none !important;
+  }
+
+  .cover-mobile-nav {
+    display: flex !important;
+  }
+
+  .cover-hero-main {
+    padding: 14px 20px 32px !important;
+    align-items: flex-start !important;
+  }
+
+  .cover-feature-text {
+    display: block !important;
+    position: absolute !important;
+    right: 20px !important;
+    bottom: 24px !important;
+    font-size: 10px !important;
+    line-height: 1.8 !important;
+    letter-spacing: 2px !important;
+    color: #556E58 !important;
+    text-align: right !important;
+    z-index: 10 !important;
+  }
+
+  .cover-trust-group,
+  .cover-desktop-trust {
+    display: flex !important;
+    margin-top: 24px !important;
+    gap: 10px !important;
+  }
+}
+
+.cover-trust-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  background-color: rgba(239, 233, 223, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(216, 207, 194, 0.85);
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #4A423D;
+  font-family: var(--font-body);
+}
+
+@media (max-width: 768px) {
+  .cover-discovery-section {
+    padding: 40px 18px 40px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .cover-navbar {
+    padding: 14px 18px !important;
+  }
+
+  .cover-hero-main {
+    padding: 16px 18px 40px !important;
+  }
+
+  .cover-copy-container h1 {
+    font-size: 34px !important;
+    line-height: 1.15 !important;
+  }
+
+  .cover-copy-container p {
+    font-size: 14.5px !important;
+  }
+
+  .cover-feature-text {
+    padding: 0 18px 24px;
+    font-size: 11px !important;
+    letter-spacing: 2px !important;
+  }
+
+  .cover-headline-line2 {
+    white-space: normal !important;
+  }
+
+  /* Preparation View Action Stacking */
+  .preparation-actions {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .preparation-proceed-btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}
+
+.cover-headline-line2 {
+  white-space: nowrap;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-terracotta);
   outline-offset: 2px;
 }
+
+/* ==========================================================================
+   Progressive Web App (PWA) Install Notification Banner
+   ========================================================================== */
+
+.pwa-install-banner {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 620px;
+  z-index: 1000;
+  background: rgba(247, 244, 237, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(189, 114, 92, 0.35);
+  box-shadow: 0 16px 36px -10px rgba(47, 42, 39, 0.22), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  border-radius: var(--radius-lg, 16px);
+  padding: 16px 20px;
+  animation: pwaSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pwaSlideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.pwa-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.pwa-banner-icon-wrap {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(47, 42, 39, 0.15);
+  border: 1px solid rgba(189, 114, 92, 0.25);
+  background: var(--color-warm-ivory, #F7F4ED);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pwa-banner-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pwa-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.pwa-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.pwa-banner-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--color-terracotta, #BD725C);
+}
+
+.pwa-banner-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  background: rgba(112, 128, 109, 0.15);
+  color: var(--color-deep-sage, #70806D);
+}
+
+.pwa-banner-title {
+  font-family: var(--font-heading);
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-deep-mocha, #2F2A27);
+  margin: 0 0 3px 0;
+  line-height: 1.25;
+}
+
+.pwa-banner-description {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #5C544E;
+  margin: 0;
+}
+
+.pwa-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.pwa-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-terracotta, #BD725C);
+  color: #FFFFFF;
+  border: none;
+  border-radius: 9999px;
+  padding: 9px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(189, 114, 92, 0.28);
+}
+
+.pwa-btn-primary:hover {
+  background: #A6604C;
+  transform: translateY(-1px);
+}
+
+.pwa-ios-instructions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(112, 128, 109, 0.12);
+  color: #3B4B38;
+  padding: 7px 12px;
+  border-radius: 9999px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.pwa-btn-dismiss {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  color: #7A7068;
+  border: 1px solid rgba(122, 112, 104, 0.25);
+  border-radius: 9999px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pwa-btn-dismiss:hover {
+  background: rgba(122, 112, 104, 0.08);
+  color: #2F2A27;
+}
+
+@media (max-width: 640px) {
+  .pwa-install-banner {
+    bottom: 16px;
+    padding: 14px 16px;
+  }
+
+  .pwa-banner-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .pwa-banner-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .pwa-btn-primary {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
 
 

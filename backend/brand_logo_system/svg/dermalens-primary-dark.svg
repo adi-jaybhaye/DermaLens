@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 680" width="100%" height="100%">
+  <defs>
+    <!-- Dark Theme Terracotta/Blush Gradient -->
+    <linearGradient id="dl-blush-dark-vert" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8CAC0"/>
+      <stop offset="100%" stop-color="#D6B4AA"/>
+    </linearGradient>
+
+    <!-- Leaf Tones for Dark Background -->
+    <linearGradient id="dl-leaf-light-dvert" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8E9E8F"/>
+      <stop offset="100%" stop-color="#B2C4B3"/>
+    </linearGradient>
+    <linearGradient id="dl-leaf-dark-dvert" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6F8070"/>
+      <stop offset="100%" stop-color="#8E9E8F"/>
+    </linearGradient>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&amp;family=Outfit:wght@500;600&amp;display=swap');
+      .wordmark-derma-dark {
+        font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+        font-size: 74px;
+        font-weight: 700;
+        fill: #F9F6F1;
+        letter-spacing: -0.5px;
+      }
+      .wordmark-lens-dark {
+        font-family: 'Cormorant Garamond', 'Playfair Display', Georgia, serif;
+        font-size: 74px;
+        font-weight: 700;
+        fill: url(#dl-blush-dark-vert);
+        letter-spacing: -0.5px;
+      }
+      .tagline-text-dark {
+        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        fill: #F9F6F1;
+        letter-spacing: 5.5px;
+        text-transform: uppercase;
+        opacity: 0.85;
+      }
+    </style>
+  </defs>
+
+  <!-- Deep Mocha Background Card -->
+  <rect width="100%" height="100%" rx="24" fill="#3A332F"/>
+
+  <!-- 1. Monogram Crest (Centered Top) -->
+  <g id="dermalens-monogram" transform="translate(142, 28) scale(0.64)">
+    <!-- 'D' Left Vertical Stem -->
+    <path d="M 60 70 H 116 V 450 H 60 C 78 450, 86 438, 86 415 V 105 C 86 82, 78 70, 60 70 Z" 
+      fill="url(#dl-blush-dark-vert)" />
+
+    <!-- 'D' Curved Bowl -->
+    <path d="M 116 70 H 175 C 255 70, 355 90, 396 168 C 424 220, 424 308, 396 360 C 362 422, 298 450, 230 450 H 215 C 272 450, 332 418, 354 354 C 374 312, 374 216, 352 176 C 320 120, 250 102, 175 102 H 116 Z" 
+      fill="#F9F6F1" />
+
+    <!-- Inner 'L' Upper Stem -->
+    <path d="M 136 106 H 214 C 196 106, 190 116, 190 134 V 315 H 160 V 134 C 160 116, 154 106, 136 106 Z" 
+      fill="#F9F6F1" />
+
+    <!-- 'L' Extended Foot -->
+    <path d="M 160 305 H 190 V 418 H 385 C 410 418, 422 400, 432 360 H 440 L 435 450 H 150 C 158 450, 160 440, 160 418 Z" 
+      fill="url(#dl-blush-dark-vert)" />
+
+    <!-- Botanical Leaf Stem -->
+    <path d="M 172 445 C 174 405, 180 355, 198 300 C 200 294, 203 295, 202 301 C 186 358, 178 406, 175 445 Z" 
+      fill="#F9F6F1" />
+
+    <!-- Botanical Leaf -->
+    <g>
+      <path d="M 198 300 C 175 220, 240 145, 412 92 C 350 145, 285 222, 198 300 Z" 
+        fill="url(#dl-leaf-light-dvert)" />
+      <path d="M 198 300 C 285 222, 350 145, 412 92 C 392 188, 330 274, 198 300 Z" 
+        fill="url(#dl-leaf-dark-dvert)" />
+      <path d="M 198 300 C 285 222, 350 145, 412 92" 
+        stroke="#3A332F" stroke-width="2.6" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+
+  <!-- 2. DermaLens Wordmark (Centered) -->
+  <g transform="translate(300, 495)">
+    <text text-anchor="middle">
+      <tspan class="wordmark-derma-dark">Derma</tspan><tspan class="wordmark-lens-dark">Lens</tspan>
+    </text>
+  </g>
+
+  <!-- 3. Tagline (Centered) -->
+  <g transform="translate(300, 545)">
+    <text text-anchor="middle" class="tagline-text-dark">SEE SKIN DIFFERENTLY</text>
+  </g>
+</svg>

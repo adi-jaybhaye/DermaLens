@@ -257,10 +257,38 @@ def test_cross_user_authorization_isolation():
     del_b = client.delete(f"/api/v1/assessments/{assessment_id}", headers=headers_b)
     assert del_b.status_code == 403
 
+    # User B attempts to rename User A's assessment -> 403 Forbidden
+    rename_b = client.patch(
+        f"/api/v1/assessments/{assessment_id}/rename",
+        json={"name": "Hacked Name"},
+        headers=headers_b,
+    )
+    assert rename_b.status_code == 403
+
+    # User B attempts to upload an image to User A's assessment -> 403 Forbidden
+    dummy_img = io.BytesIO()
+    Image.new("RGB", (320, 320), color=(180, 150, 130)).save(dummy_img, format="JPEG")
+    dummy_img.seek(0)
+    upload_b = client.post(
+        f"/api/v1/assessments/{assessment_id}/images?view=front",
+        files={"file": ("test.jpg", dummy_img.getvalue(), "image/jpeg")},
+        headers=headers_b,
+    )
+    assert upload_b.status_code == 403
+
     # User B's history must NOT contain User A's assessment
     hist_b = client.get("/api/v1/assessments/history", headers=headers_b)
     assert hist_b.status_code == 200
     assert not any(item["id"] == assessment_id for item in hist_b.json())
+
+    # User A successfully renames own assessment
+    rename_a = client.patch(
+        f"/api/v1/assessments/{assessment_id}/rename",
+        json={"name": "Spring Checkup"},
+        headers=headers_a,
+    )
+    assert rename_a.status_code == 200
+    assert rename_a.json()["name"] == "Spring Checkup"
 
     # User A successfully accesses and deletes own assessment
     get_a = client.get(f"/api/v1/assessments/{assessment_id}", headers=headers_a)

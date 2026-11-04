@@ -9,6 +9,7 @@ import {
   XIcon,
   ChevronDownIcon,
   CalendarIcon,
+  DownloadIcon,
 } from './Icons';
 
 interface NavbarProps {
@@ -80,47 +81,55 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="nav-container">
         {/* Brand */}
         <div
-          onClick={() => handleNavClick('home')}
+          onClick={() => handleNavClick('cover')}
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
+            gap: 12,
             cursor: 'pointer',
           }}
         >
           <div style={{
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             borderRadius: 12,
-            background: 'linear-gradient(135deg, var(--color-terracotta) 0%, #E28C73 100%)',
+            background: 'var(--color-ivory)',
+            border: '1px solid var(--color-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#FFFFFF',
-            boxShadow: '0 4px 12px rgba(200, 109, 81, 0.25)',
+            boxShadow: '0 2px 8px rgba(35, 32, 29, 0.06)',
             flexShrink: 0,
+            overflow: 'hidden',
+            padding: 2,
           }}>
-            <SparklesIcon size={20} />
+            <img 
+              src="/brand/logo/dermalens-monogram-small.svg" 
+              alt="DermaLens" 
+              style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+            />
           </div>
           <div>
             <div style={{
-              fontFamily: 'var(--font-heading)',
-              fontSize: 18,
+              fontFamily: "'Cormorant Garamond', 'Playfair Display', Georgia, serif",
+              fontSize: 22,
               fontWeight: 700,
               letterSpacing: '-0.3px',
+              lineHeight: 1.1,
               color: 'var(--color-charcoal)',
             }}>
               Derma<span style={{ color: 'var(--color-terracotta)' }}>Lens</span>
             </div>
             <div style={{
-              fontSize: 9.5,
+              fontFamily: 'var(--font-heading)',
+              fontSize: 9,
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.8px',
+              letterSpacing: '1.2px',
               color: 'var(--color-muted)',
-              marginTop: -2,
+              marginTop: 1,
             }}>
-              Intelligent Skin Assessment
+              See Skin Differently
             </div>
           </div>
         </div>
@@ -387,6 +396,18 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <ShieldCheckIcon size={18} color="var(--color-terracotta)" />
           <span>Evidence &amp; Sources</span>
+        </button>
+
+        <button
+          onClick={() => {
+            window.dispatchEvent(new CustomEvent('open-pwa-install'));
+            setMobileMenuOpen(false);
+          }}
+          className="nav-mobile-item"
+          style={{ color: 'var(--color-terracotta)', fontWeight: 600 }}
+        >
+          <DownloadIcon size={18} color="var(--color-terracotta)" />
+          <span>Install DermaLens App</span>
         </button>
 
         <div style={{ height: 1, backgroundColor: 'var(--color-border-light)', margin: '4px 0' }} />

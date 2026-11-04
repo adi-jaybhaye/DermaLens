@@ -11,6 +11,7 @@ from PIL import Image, ImageOps
 from app.config.database import database
 from app.schemas.image import ImageResponse
 from app.services.image_service import create_image_record
+from app.services.storage_service import storage_service
 from app.services.assessment_service import process_assessment_image
 from app.api.deps import get_current_user, verify_assessment_ownership
 from app.utils.rate_limiter import upload_limiter
@@ -129,29 +130,26 @@ async def upload_assessment_image(
             detail="Uploaded file is corrupted or not a valid image",
         )
 
-    # Generate filename and save image
-    extension_map = {
-        "image/jpeg": ".jpg",
-        "image/png": ".png",
-        "image/webp": ".webp",
-    }
-    extension = extension_map.get(file.content_type, ".jpg")
-    storage_key = f"{uuid4().hex}{extension}"
-    file_path = UPLOAD_DIR / storage_key
-
-    file_path.write_bytes(contents)
+    # Save image via unified storage service (Azure Blob Storage or private local storage)
+    save_result = storage_service.save_file(
+        file_bytes=contents,
+        filename=file.filename,
+        content_type=file.content_type,
+    )
+    storage_key = save_result["storage_key"]
+    file_path = save_result["file_path"]
 
     # Run ML preprocessing pipeline
     processing_result = process_assessment_image(
         assessment_id=assessment_id,
         image_bytes=contents,
         view=view,
-        file_path=str(file_path),
+        file_path=file_path,
     )
 
     if not processing_result["success"]:
         # Clean up saved file on failure to avoid orphaned files
-        file_path.unlink(missing_ok=True)
+        storage_service.delete_file(file_path)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=processing_result,

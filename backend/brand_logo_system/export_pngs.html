@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>DermaLens PNG Generator & Downloader</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #FAF7F2; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 20px; }
+    .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); text-align: center; }
+    canvas { max-width: 100%; height: auto; border: 1px dashed #DDD; border-radius: 8px; margin-bottom: 10px; background-image: linear-gradient(45deg, #eee 25%, transparent 25%), linear-gradient(-45deg, #eee 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eee 75%), linear-gradient(-45deg, transparent 75%, #eee 75%); background-size: 16px 16px; background-position: 0 0, 0 8px, 8px -8px, -8px 0px; }
+    button { background: #C47A65; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #A85E4B; }
+  </style>
+</head>
+<body>
+  <h1>DermaLens High-Resolution PNG Generator</h1>
+  <p>Generates 1024&times;1024 px transparent-background production PNGs directly from master vectors.</p>
+  <button id="btn-export-all" style="padding: 12px 24px; font-size: 15px;">Save / Download All PNGs</button>
+  
+  <div class="grid" id="canvas-grid"></div>
+
+  <script>
+    const assets = [
+      { name: 'dermalens-monogram', url: 'svg/dermalens-monogram.svg', w: 1024, h: 1024 },
+      { name: 'dermalens-monogram-small', url: 'svg/dermalens-monogram-small.svg', w: 512, h: 512 },
+      { name: 'dermalens-primary-vertical', url: 'svg/dermalens-primary-vertical.svg', w: 1200, h: 1360 },
+      { name: 'dermalens-primary-horizontal', url: 'svg/dermalens-primary-horizontal.svg', w: 1520, h: 320 },
+      { name: 'dermalens-monogram-dark-theme', url: 'svg/dermalens-monogram-dark-theme.svg', w: 1024, h: 1024 },
+      { name: 'dermalens-monogram-monochrome-dark', url: 'svg/dermalens-monogram-monochrome-dark.svg', w: 1024, h: 1024 },
+      { name: 'dermalens-monogram-monochrome-white', url: 'svg/dermalens-monogram-monochrome-white.svg', w: 1024, h: 1024 },
+      { name: 'dermalens-app-icon-ivory', url: 'svg/dermalens-app-icon-ivory.svg', w: 1024, h: 1024 },
+      { name: 'dermalens-app-icon-terracotta', url: 'svg/dermalens-app-icon-terracotta.svg', w: 1024, h: 1024 },
+      { name: 'dermalens-app-icon-mocha', url: 'svg/dermalens-app-icon-mocha.svg', w: 1024, h: 1024 }
+    ];
+
+    const grid = document.getElementById('canvas-grid');
+
+    async function loadAndRender() {
+      for (const item of assets) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `<h3>${item.name}</h3>`;
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = item.w;
+        canvas.height = item.h;
+        const ctx = canvas.getContext('2d');
+        
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = item.url;
+        
+        await new Promise((resolve) => {
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, item.w, item.h);
+            resolve();
+          };
+        });
+
+        card.appendChild(canvas);
+        
+        const btn = document.createElement('button');
+        btn.textContent = `Download PNG (${item.w}×${item.h})`;
+        btn.onclick = () => {
+          const a = document.createElement('a');
+          a.download = `${item.name}.png`;
+          a.href = canvas.toDataURL('image/png');
+          a.click();
+        };
+        card.appendChild(btn);
+        grid.appendChild(card);
+      }
+    }
+
+    loadAndRender();
+
+    document.getElementById('btn-export-all').onclick = () => {
+      document.querySelectorAll('.card button').forEach(b => b.click());
+    };
+  </script>
+</body>
+</html>

@@ -2,7 +2,7 @@
  * API client for Face Skin Assessment System backend.
  */
 
-const API_BASE = (import.meta as any).env?.VITE_API_BASE || '/api/v1';
+const API_BASE = (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE || '/api/v1';
 
 export interface User {
   id: string;
@@ -58,8 +58,8 @@ export interface RegionXaiDetails {
   where_we_noticed_it: string;
   why_ai_identified_it: string;
   why_it_can_occur: string;
-  heatmap_explanation: string;
-  learn_more: XaiLearnMore;
+  heatmap_explanation?: string;
+  learn_more?: XaiLearnMore;
 }
 
 export interface RegionConcern {
@@ -69,19 +69,21 @@ export interface RegionConcern {
   model_confidence?: number;
   is_confident?: boolean;
   confidence_status?: string;
-  why_identified: string;
-  why_it_can_occur: string;
-  visual_evidence: string[];
-  sources: Array<{
+  why_identified?: string;
+  why_it_can_occur?: string;
+  visual_evidence?: string[];
+  sources?: Array<{
     title: string;
     source: string;
     url: string;
   }>;
   xai?: RegionXaiDetails;
+  region?: { name: string; display_name: string };
 }
 
 export interface RegionData {
   valid: boolean;
+  detected?: boolean;
   reason?: string;
   concern?: RegionConcern | null;
   xai_explanation?: {
@@ -175,17 +177,19 @@ function getAuthHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function parseErrorMessage(errDetail: any, fallback: string): string {
+function parseErrorMessage(errDetail: unknown, fallback: string): string {
   if (!errDetail) return fallback;
   if (typeof errDetail === 'string') return errDetail;
   if (typeof errDetail === 'object') {
-    if (errDetail.quality?.issues?.length) {
-      return `Image quality notice: ${errDetail.quality.issues.join(', ')}`;
+    const obj = errDetail as Record<string, unknown>;
+    const quality = obj.quality as { issues?: string[] } | undefined;
+    if (quality?.issues?.length) {
+      return `Image quality notice: ${quality.issues.join(', ')}`;
     }
-    if (errDetail.message) return errDetail.message;
-    if (errDetail.reason) return errDetail.reason;
+    if (typeof obj.message === 'string') return obj.message;
+    if (typeof obj.reason === 'string') return obj.reason;
     if (Array.isArray(errDetail)) {
-      return errDetail.map((e: any) => e.msg || JSON.stringify(e)).join('; ');
+      return errDetail.map((e) => (typeof e === 'object' && e && 'msg' in e ? String((e as Record<string, unknown>).msg) : JSON.stringify(e))).join('; ');
     }
     return JSON.stringify(errDetail);
   }
@@ -202,7 +206,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Registration failed' }));
-      throw new Error(err.detail || 'Registration failed');
+      throw new Error(parseErrorMessage(err.detail, 'Registration failed'));
     }
     const data = await res.json();
     localStorage.setItem('derma_token', data.access_token);
@@ -217,7 +221,7 @@ export const api = {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({ detail: 'Invalid credentials' }));
-      throw new Error(err.detail || 'Login failed');
+      throw new Error(parseErrorMessage(err.detail, 'Login failed'));
     }
     const data = await res.json();
     localStorage.setItem('derma_token', data.access_token);

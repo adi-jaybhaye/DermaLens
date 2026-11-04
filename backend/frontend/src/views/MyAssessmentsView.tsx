@@ -43,7 +43,6 @@ export const MyAssessmentsView: React.FC<MyAssessmentsViewProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    setLoading(true);
     api.getAssessmentHistory()
       .then((data) => {
         if (isMounted) {
@@ -97,8 +96,8 @@ export const MyAssessmentsView: React.FC<MyAssessmentsViewProps> = ({
       );
       showToast('Assessment renamed successfully', 'success');
       setRenameTarget(null);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to rename assessment', 'error');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to rename assessment', 'error');
     } finally {
       setIsRenaming(false);
     }
@@ -118,8 +117,8 @@ export const MyAssessmentsView: React.FC<MyAssessmentsViewProps> = ({
       setAssessments((prev) => prev.filter((a) => a.id !== deleteTarget.id));
       showToast('Assessment deleted successfully', 'success');
       setDeleteTarget(null);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to delete assessment', 'error');
+    } catch (err: unknown) {
+      showToast(err instanceof Error ? err.message : 'Failed to delete assessment', 'error');
     } finally {
       setIsDeleting(false);
     }
@@ -240,7 +239,7 @@ export const MyAssessmentsView: React.FC<MyAssessmentsViewProps> = ({
           className="glass-panel"
           style={{
             textAlign: 'center',
-            padding: '60px 24px',
+            padding: '48px 24px 36px',
             borderRadius: 'var(--radius-xl)',
             backgroundColor: 'var(--color-surface)',
             border: '1.5px dashed var(--color-border)',
@@ -280,6 +279,41 @@ export const MyAssessmentsView: React.FC<MyAssessmentsViewProps> = ({
             <SparklesIcon size={18} />
             Start Your First Assessment
           </button>
+
+          {/* 3-Pillar Assessment Preview to eliminate empty dead space */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 150px), 1fr))',
+            gap: 12,
+            marginTop: 28,
+            paddingTop: 24,
+            borderTop: '1px solid var(--color-border-light)',
+            textAlign: 'left',
+          }}>
+            <div style={{ padding: '12px', backgroundColor: 'var(--color-surface-subtle)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-terracotta)', textTransform: 'uppercase', marginBottom: 2 }}>
+                1. Multi-View
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-charcoal)' }}>Front &amp; Profiles</div>
+              <div style={{ fontSize: 11.5, color: 'var(--color-muted)', marginTop: 2 }}>3 distinct facial angles evaluated</div>
+            </div>
+
+            <div style={{ padding: '12px', backgroundColor: 'var(--color-surface-subtle)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-sage-dark)', textTransform: 'uppercase', marginBottom: 2 }}>
+                2. 5-Zone Mesh
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-charcoal)' }}>Forehead to Chin</div>
+              <div style={{ fontSize: 11.5, color: 'var(--color-muted)', marginTop: 2 }}>Localized surface mapping</div>
+            </div>
+
+            <div style={{ padding: '12px', backgroundColor: 'var(--color-surface-subtle)', borderRadius: 'var(--radius-md)' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-terracotta)', textTransform: 'uppercase', marginBottom: 2 }}>
+                3. XAI Insights
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-charcoal)' }}>Focus Heatmaps</div>
+              <div style={{ fontSize: 11.5, color: 'var(--color-muted)', marginTop: 2 }}>Evidence-based literature</div>
+            </div>
+          </div>
         </div>
       )}
 

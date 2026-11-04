@@ -32,7 +32,7 @@ export const SourcesView: React.FC = () => {
       ) : (
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
           gap: 18,
         }}>
           {sources.map((src) => (
@@ -97,6 +97,34 @@ export const SourcesView: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Evidence-Based Methodology Statement (Eliminates bottom dead space) */}
+      <div
+        className="glass-panel"
+        style={{
+          marginTop: 40,
+          padding: '24px 28px',
+          backgroundColor: '#FFFFFF',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--color-border)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+          flexWrap: 'wrap',
+        }}
+      >
+        <div style={{ color: 'var(--color-sage-dark)', flexShrink: 0 }}>
+          <ShieldCheckIcon size={26} />
+        </div>
+        <div style={{ flex: 1, minWidth: 260 }}>
+          <h4 style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-charcoal)', marginBottom: 4 }}>
+            Evidence Mapping Methodology
+          </h4>
+          <p style={{ fontSize: 13, color: 'var(--color-muted)', margin: 0, lineHeight: 1.55 }}>
+            DermaLens visual algorithms map visible pixel clusters and surface texture features to published dermatological literature. These publications provide physiological context on why surface features manifest, strictly avoiding diagnostic claims.
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

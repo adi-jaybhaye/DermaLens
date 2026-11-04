@@ -39,9 +39,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   ];
 
   return (
-    <div style={{ maxWidth: 1140, margin: '0 auto', padding: '40px 20px 80px' }}>
+    <div className="home-root-container" style={{ maxWidth: 1140, margin: '0 auto', padding: '40px 20px 80px' }}>
       {/* Hero Section */}
-      <section style={{
+      <section className="home-hero-section" style={{
         textAlign: 'center',
         padding: '50px 20px 60px',
         position: 'relative',
@@ -127,7 +127,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {/* System Pipeline Highlights */}
       <section style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(215px, 1fr))',
         gap: 20,
         marginBottom: 60,
       }}>
@@ -328,6 +328,47 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <ChevronRightIcon size={15} />
             </button>
           </div>
+        </section>
+      )}
+
+      {/* New User Getting Started Card (Eliminates dead space when history is empty) */}
+      {history.length === 0 && (
+        <section
+          className="glass-panel"
+          style={{
+            padding: '28px 30px',
+            backgroundColor: '#FFFFFF',
+            border: '1.5px solid var(--color-border)',
+            borderRadius: 'var(--radius-xl)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 20,
+            boxShadow: 'var(--shadow-sm)',
+          }}
+        >
+          <div style={{ maxWidth: 620 }}>
+            <div className="pill-badge pill-sage" style={{ marginBottom: 8, fontSize: 11.5 }}>
+              <SparklesIcon size={13} />
+              Getting Started with DermaLens
+            </div>
+            <h4 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-charcoal)', marginBottom: 6 }}>
+              Begin Your First Multi-Perspective Skin Assessment
+            </h4>
+            <p style={{ fontSize: 13.5, color: 'var(--color-muted)', lineHeight: 1.55, margin: 0 }}>
+              Takes approximately 2 minutes in even natural daylight. Evaluates hydration patterns, oil distribution, redness, and textural harmony without clinical claims.
+            </p>
+          </div>
+
+          <button
+            onClick={onStartAssessment}
+            className="btn-primary"
+            style={{ padding: '12px 26px', fontSize: 14.5 }}
+          >
+            <CameraIcon size={18} />
+            <span>Start Assessment</span>
+          </button>
         </section>
       )}
     </div>

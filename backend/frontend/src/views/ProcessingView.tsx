@@ -59,9 +59,9 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, captu
         if (!isCancelled) {
           onSuccess(results);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!isCancelled) {
-          setErrorMessage(err.message || 'Pipeline processing failed.');
+          setErrorMessage(err instanceof Error ? err.message : 'Pipeline processing failed.');
         }
       }
     };
@@ -71,6 +71,8 @@ export const ProcessingView: React.FC<ProcessingViewProps> = ({ viewFiles, captu
     return () => {
       isCancelled = true;
     };
+    // Pipeline execution on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

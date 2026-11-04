@@ -1,0 +1,37 @@
+{
+  "name": "DermaLens — Face Skin Assessment",
+  "short_name": "DermaLens",
+  "description": "Evidence-based facial skin assessment with multi-view analysis, regional skin pattern detection, and visual focus heatmaps.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F7F4ED",
+  "theme_color": "#2F2A27",
+  "categories": ["lifestyle", "health"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/brand/logo/dermalens-monogram.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

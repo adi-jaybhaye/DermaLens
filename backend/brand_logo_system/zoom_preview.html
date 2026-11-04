@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DermaLens Detailed Monogram Inspection</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      background: #F4EFEA;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .panel {
+      background: #FFFFFF;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    h2 {
+      margin-top: 0;
+      font-size: 15px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .box {
+      width: 100%;
+      height: 520px;
+      overflow: hidden;
+      position: relative;
+      background: #F9F6F1;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #EBE4DC;
+    }
+    /* Precisely target the top-right "Logo Mark (Monogram)" box in the reference image */
+    .crop-mark {
+      position: absolute;
+      width: 320%;
+      top: -15%;
+      left: -195%;
+    }
+    .svg-container {
+      width: 75%;
+      height: 75%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid">
+    <div class="panel">
+      <h2>Original Reference: Logo Mark (Monogram)</h2>
+      <div class="box">
+        <img class="crop-mark" src="file:///C:/Users/HP/.gemini/antigravity-ide/brain/1cb9bf70-a201-4a1b-9f81-8517aa1c6e18/.user_uploaded/media_1791981061033.jpg">
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Vector SVG Output (v2 Refined)</h2>
+      <div class="box">
+        <div class="svg-container">
+          <img src="test_monogram.svg?v=2" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -34,6 +34,7 @@ class SimpleRateLimiter:
 
 
 # Preconfigured rate limiters
-auth_limiter = SimpleRateLimiter(max_requests=10, window_seconds=60)      # 10 req/min for auth
+auth_limiter = SimpleRateLimiter(max_requests=30, window_seconds=60)      # 30 req/min for auth
 upload_limiter = SimpleRateLimiter(max_requests=20, window_seconds=60)    # 20 uploads/min
 api_limiter = SimpleRateLimiter(max_requests=100, window_seconds=60)     # 100 req/min general
+

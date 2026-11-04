@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="dl-terracotta-badge" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D9B7AD"/>
+      <stop offset="50%" stop-color="#C87B66"/>
+      <stop offset="100%" stop-color="#B76B56"/>
+    </linearGradient>
+    <linearGradient id="dl-leaf-light-b1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8E9E8F"/>
+      <stop offset="100%" stop-color="#A5B8A6"/>
+    </linearGradient>
+    <linearGradient id="dl-leaf-dark-b1" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#768777"/>
+      <stop offset="100%" stop-color="#8E9E8F"/>
+    </linearGradient>
+    <filter id="leafShadowB1" x="-15%" y="-15%" width="135%" height="135%">
+      <feDropShadow dx="1" dy="3" stdDeviation="3.5" flood-color="#3A332F" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <!-- iOS / Modern Squircle Badge (Warm Ivory) -->
+  <rect width="512" height="512" rx="115" fill="#F9F6F1"/>
+  <!-- Subtle border -->
+  <rect width="508" height="508" x="2" y="2" rx="113" fill="none" stroke="#EAE2D8" stroke-width="2"/>
+
+  <!-- Centered Monogram -->
+  <g transform="translate(68, 54) scale(0.75)">
+    <path d="M 60 70 H 116 V 450 H 60 C 78 450, 86 438, 86 415 V 105 C 86 82, 78 70, 60 70 Z" 
+      fill="url(#dl-terracotta-badge)" />
+    <path d="M 116 70 H 175 C 255 70, 355 90, 396 168 C 424 220, 424 308, 396 360 C 362 422, 298 450, 230 450 H 215 C 272 450, 332 418, 354 354 C 374 312, 374 216, 352 176 C 320 120, 250 102, 175 102 H 116 Z" 
+      fill="#3A332F" />
+    <path d="M 136 106 H 214 C 196 106, 190 116, 190 134 V 315 H 160 V 134 C 160 116, 154 106, 136 106 Z" 
+      fill="#3A332F" />
+    <path d="M 160 305 H 190 V 418 H 385 C 410 418, 422 400, 432 360 H 440 L 435 450 H 150 C 158 450, 160 440, 160 418 Z" 
+      fill="url(#dl-terracotta-badge)" />
+    <path d="M 172 445 C 174 405, 180 355, 198 300 C 200 294, 203 295, 202 301 C 186 358, 178 406, 175 445 Z" 
+      fill="#3A332F" />
+    <g filter="url(#leafShadowB1)">
+      <path d="M 198 300 C 175 220, 240 145, 412 92 C 350 145, 285 222, 198 300 Z" 
+        fill="url(#dl-leaf-light-b1)" />
+      <path d="M 198 300 C 285 222, 350 145, 412 92 C 392 188, 330 274, 198 300 Z" 
+        fill="url(#dl-leaf-dark-b1)" />
+      <path d="M 198 300 C 285 222, 350 145, 412 92" 
+        stroke="#F9F6F1" stroke-width="2.6" stroke-linecap="round" fill="none" />
+    </g>
+  </g>
+</svg>

@@ -67,6 +67,56 @@ export const PreparationView: React.FC<PreparationViewProps> = ({ onProceed, onB
           ))}
         </div>
 
+        {/* Visual 3-Perspective Guide Strip (Eliminates vertical dead space) */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))',
+          gap: 12,
+          marginBottom: 24,
+        }}>
+          <div style={{
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: '#FAF7F2',
+            border: '1px solid var(--color-border)',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-terracotta)', textTransform: 'uppercase', marginBottom: 4 }}>
+              Angle 1
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-charcoal)' }}>Frontal Direct</div>
+            <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>Direct forward gaze &bull; 0°</div>
+          </div>
+
+          <div style={{
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: '#FAF7F2',
+            border: '1px solid var(--color-border)',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-sage-dark)', textTransform: 'uppercase', marginBottom: 4 }}>
+              Angle 2
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-charcoal)' }}>Left Profile</div>
+            <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>Turn head right &bull; 45°</div>
+          </div>
+
+          <div style={{
+            padding: '14px 16px',
+            borderRadius: 'var(--radius-md)',
+            backgroundColor: '#FAF7F2',
+            border: '1px solid var(--color-border)',
+            textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-terracotta)', textTransform: 'uppercase', marginBottom: 4 }}>
+              Angle 3
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-charcoal)' }}>Right Profile</div>
+            <div style={{ fontSize: 12, color: 'var(--color-muted)', marginTop: 2 }}>Turn head left &bull; 45°</div>
+          </div>
+        </div>
+
         {/* Photo Clarity Notice */}
         <div style={{
           padding: '16px 20px',
@@ -86,20 +136,23 @@ export const PreparationView: React.FC<PreparationViewProps> = ({ onProceed, onB
           </div>
         </div>
 
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          flexWrap: 'wrap',
-          gap: 14,
-        }}>
+        <div 
+          className="preparation-actions"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: 14,
+          }}
+        >
           <button onClick={onBack} className="btn-ghost" style={{ padding: '10px 18px' }}>
             Back
           </button>
 
           <button
             onClick={onProceed}
-            className="btn-primary"
+            className="btn-primary preparation-proceed-btn"
             style={{ padding: '13px 26px', flex: 1, minWidth: 220, justifyContent: 'center' }}
           >
             <CameraIcon size={18} />

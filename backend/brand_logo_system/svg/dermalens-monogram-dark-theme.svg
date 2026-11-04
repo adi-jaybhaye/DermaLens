@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Dark Theme Terracotta/Blush Gradient -->
+    <linearGradient id="dl-blush-darktheme" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E8CAC0"/>
+      <stop offset="100%" stop-color="#D6B4AA"/>
+    </linearGradient>
+
+    <!-- Leaf Tones for Dark Background -->
+    <linearGradient id="dl-leaf-light-dt" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8E9E8F"/>
+      <stop offset="100%" stop-color="#B2C4B3"/>
+    </linearGradient>
+    <linearGradient id="dl-leaf-dark-dt" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#6F8070"/>
+      <stop offset="100%" stop-color="#8E9E8F"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="100%" height="100%" fill="none"/>
+
+  <!-- Centered Dark Theme Monogram Mark -->
+  <g id="dermalens-monogram-dark-theme" transform="translate(42, 18) scale(0.92)">
+    <!-- 1. 'D' LEFT STEM (Soft Blush) -->
+    <path id="stem-d" d="
+      M 60 70 
+      H 116 
+      V 450 
+      H 60 
+      C 78 450, 86 438, 86 415 
+      V 105 
+      C 86 82, 78 70, 60 70 
+      Z" 
+      fill="url(#dl-blush-darktheme)" />
+
+    <!-- 2. 'D' CURVED BOWL (Ivory White on Dark) -->
+    <path id="bowl-d" d="
+      M 116 70 
+      H 175 
+      C 255 70, 355 90, 396 168 
+      C 424 220, 424 308, 396 360 
+      C 362 422, 298 450, 230 450 
+      H 215 
+      C 272 450, 332 418, 354 354 
+      C 374 312, 374 216, 352 176 
+      C 320 120, 250 102, 175 102 
+      H 116 
+      Z" 
+      fill="#F9F6F1" />
+
+    <!-- 3. INNER 'L' VERTICAL STEM (Ivory White Upper Section) -->
+    <path id="inner-stem-l" d="
+      M 136 106 
+      H 214 
+      C 196 106, 190 116, 190 134 
+      V 315 
+      H 160 
+      V 134 
+      C 160 116, 154 106, 136 106 
+      Z" 
+      fill="#F9F6F1" />
+
+    <!-- 4. 'L' LOWER STEM & EXTENDED FOOT (Soft Blush) -->
+    <path id="foot-l" d="
+      M 160 305 
+      H 190 
+      V 418 
+      H 385 
+      C 410 418, 422 400, 432 360 
+      H 440 
+      L 435 450 
+      H 150 
+      C 158 450, 160 440, 160 418 
+      Z" 
+      fill="url(#dl-blush-darktheme)" />
+
+    <!-- 5. BOTANICAL LEAF STEM -->
+    <path id="leaf-stem" d="
+      M 172 445 
+      C 174 405, 180 355, 198 300 
+      C 200 294, 203 295, 202 301 
+      C 186 358, 178 406, 175 445 
+      Z" 
+      fill="#F9F6F1" />
+
+    <!-- 6. BOTANICAL LEAF -->
+    <g id="leaf-group">
+      <path id="leaf-top" d="
+        M 198 300 
+        C 175 220, 240 145, 412 92 
+        C 350 145, 285 222, 198 300 
+        Z" 
+        fill="url(#dl-leaf-light-dt)" />
+
+      <path id="leaf-bottom" d="
+        M 198 300 
+        C 285 222, 350 145, 412 92 
+        C 392 188, 330 274, 198 300 
+        Z" 
+        fill="url(#dl-leaf-dark-dt)" />
+
+      <!-- Central Vein (Deep Mocha for contrast) -->
+      <path id="leaf-spine" d="
+        M 198 300 
+        C 285 222, 350 145, 412 92
+        " 
+        stroke="#23201D" 
+        stroke-width="2.6" 
+        stroke-linecap="round" 
+        fill="none" />
+    </g>
+  </g>
+</svg>
