@@ -67,3 +67,4 @@ def test_storage_service_production_failfast(monkeypatch):
         StorageService()
     assert "AZURE_STORAGE_CONNECTION_STRING" in str(exc_info.value)
     assert "strictly prohibited" in str(exc_info.value)
+
