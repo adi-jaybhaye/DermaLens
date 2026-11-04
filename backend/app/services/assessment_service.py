@@ -210,7 +210,15 @@ def rename_assessment(assessment_id: str, new_name: str, user_id: str = None) ->
 
 
 def delete_assessment(assessment_id: str, user_id: str = None) -> bool:
-    """Delete an assessment session, all associated physical image files, and database records."""
+    """Delete an assessment session, all associated physical image files, and database records.
+
+    Fail-Safe Biometric Storage Rule:
+    - If storage deletion fails for ANY biometric image artifact:
+      DO NOT delete database records.
+      Update session status to 'cleanup_pending' with failed file paths.
+      Log critical error and return False.
+    - Database records are ONLY purged once all physical/cloud image artifacts are verified deleted.
+    """
     try:
         object_id = ObjectId(assessment_id)
     except Exception:
@@ -226,9 +234,30 @@ def delete_assessment(assessment_id: str, user_id: str = None) -> bool:
 
     # 1. Clean up physical image files from session document & assessment_images collection
     image_records = list(database.assessment_images.find({"assessment_id": object_id}))
-    storage_service.delete_assessment_files(existing, image_records)
+    storage_report = storage_service.delete_assessment_files(existing, image_records)
 
-    # 2. Delete database records
+    # 2. Storage Deletion Integrity Gate
+    if not storage_report.get("success", False):
+        failed_paths = storage_report.get("failed_paths", [])
+        import logging
+        logging.getLogger(__name__).critical(
+            f"Storage cleanup failed for assessment {assessment_id}. "
+            f"Failed paths: {failed_paths}. Retaining database records to prevent orphaned biometric data."
+        )
+        database.assessment_sessions.update_one(
+            {"_id": object_id},
+            {
+                "$set": {
+                    "status": "cleanup_pending",
+                    "cleanup_error": f"Failed to delete {len(failed_paths)} image storage artifact(s)",
+                    "failed_storage_paths": failed_paths,
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+        return False
+
+    # 3. Purge database records only after storage cleanup is confirmed
     database.assessment_images.delete_many({"assessment_id": object_id})
     result = database.assessment_sessions.delete_one({"_id": object_id})
 

@@ -49,25 +49,20 @@ jobs:
           pip install -r requirements.txt
           pip install pytest
 
-      - name: Ensure test model artifact exists
+      - name: Verify release model artifact integrity
         run: |
-          mkdir -p models
           python -c "
-          import os, torch, torchvision.models as models
+          import hashlib, os, sys
           path = 'models/efficientnet_b0_skin_concerns.pth'
+          expected = 'ba123334b476a24b710a78000a70b1d6dcc44ee100664673d6e61ed3d0827412'
           if not os.path.exists(path):
-              m = models.efficientnet_b0(weights=None)
-              m.classifier[1] = torch.nn.Linear(m.classifier[1].in_features, 8)
-              ckpt = {
-                  'model_state_dict': m.state_dict(),
-                  'class_names': [
-                      'Redness', 'dark spots', 'inflammatory acne',
-                      'non inflammatory acne black heads', 'non inflammatory acne white heads',
-                      'pigmentation', 'pores', 'wrinkles'
-                  ]
-              }
-              torch.save(ckpt, path)
-              print('Generated CI test checkpoint at', path)
+              print(f'CRITICAL: Release model artifact {path} is missing from build/repository!')
+              sys.exit(1)
+          actual = hashlib.sha256(open(path, 'rb').read()).hexdigest().lower()
+          if actual != expected:
+              print(f'CRITICAL: Checksum mismatch for {path}! Expected {expected}, got {actual}')
+              sys.exit(1)
+          print(f'SUCCESS: Verified release model artifact {path} (SHA-256: {actual})')
           "
 
       - name: Run backend tests
@@ -118,6 +113,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: actions/setup-buildx-action@v3
 
-      - name: Validate Dockerfile syntax
+      - name: Build and validate container image
         run: |
-          docker build --dry-run -f backend/Dockerfile backend/
+          docker build -t dermalens-api:test -f backend/Dockerfile backend/

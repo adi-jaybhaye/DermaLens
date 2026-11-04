@@ -29,6 +29,7 @@ backend/uploads/
 *.onnx
 *.h5
 *.keras
+!backend/models/efficientnet_b0_skin_concerns.pth
 
 # Jupyter
 .ipynb_checkpoints/

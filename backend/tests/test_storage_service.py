@@ -68,3 +68,42 @@ def test_storage_service_production_failfast(monkeypatch):
     assert "AZURE_STORAGE_CONNECTION_STRING" in str(exc_info.value)
     assert "strictly prohibited" in str(exc_info.value)
 
+
+
+def test_delete_assessment_storage_failure_retains_db_record(monkeypatch):
+    """Verify that if physical image storage deletion fails, database records are NOT deleted
+    and status transitions to 'cleanup_pending'.
+    """
+    from app.services.assessment_service import delete_assessment, create_assessment
+    from app.schemas.assessment import AssessmentCreate
+    from app.config.database import database
+    from bson import ObjectId
+
+    # 1. Create a real assessment
+    data = AssessmentCreate(views=["front"], capture_type="upload")
+    assessment_id = create_assessment(data, user_id="test_user_storage_fail")
+    assert assessment_id is not None
+
+    # 2. Simulate storage deletion failure
+    def mock_delete_files(*args, **kwargs):
+        return {
+            "total_expected": 1,
+            "deleted_count": 0,
+            "failed_paths": ["azure://assessment-images/front_view.jpg"],
+            "success": False,
+        }
+
+    monkeypatch.setattr(storage_service, "delete_assessment_files", mock_delete_files)
+
+    # 3. Attempt deletion — MUST return False
+    result = delete_assessment(assessment_id, user_id="test_user_storage_fail")
+    assert result is False
+
+    # 4. Verify database record was NOT deleted!
+    record = database.assessment_sessions.find_one({"_id": ObjectId(assessment_id)})
+    assert record is not None, "Database record must be retained when storage deletion fails!"
+    assert record["status"] == "cleanup_pending"
+    assert "azure://assessment-images/front_view.jpg" in record["failed_storage_paths"]
+
+    # 5. Clean up test document safely
+    database.assessment_sessions.delete_one({"_id": ObjectId(assessment_id)})

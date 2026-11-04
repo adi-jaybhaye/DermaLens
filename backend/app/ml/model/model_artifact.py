@@ -43,38 +43,47 @@ def verify_model_checksum(file_path: Path, expected_sha256: str = MODEL_CHECKSUM
 
 
 def resolve_model_artifact_path() -> Path:
-    """Deterministically resolve the production or development EfficientNet-B0 checkpoint.
+    """Deterministically resolve and verify the production EfficientNet-B0 checkpoint.
 
     Resolution Priority:
-    1. Explicit configured MODEL_PATH from settings (if exists)
+    1. Explicit configured MODEL_PATH from settings
     2. Container deployment path: /app/models/efficientnet_b0_skin_concerns.pth
     3. Project models directory: models/efficientnet_b0_skin_concerns.pth
     4. Training artifacts directory: training/models/efficientnet_b0_skin_concerns.pth
 
-    Raises FileNotFoundError if no verified checkpoint exists.
-    Silent fallback to a fake or uninitialized model is strictly prohibited.
+    Enforcement:
+    - If no candidate exists: raises FileNotFoundError.
+    - If a candidate file exists but its SHA-256 does NOT match expected checksum:
+      raises RuntimeError immediately (FAIL CLOSED).
+    - Silent fallback to unverified or corrupted model weights is strictly prohibited.
     """
-    configured = Path(settings.model_path)
-    if configured.is_absolute() and configured.exists():
-        return configured
+    expected_checksum = (settings.model_checksum or MODEL_CHECKSUM).strip().lower()
 
-    candidates = [
-        BASE_DIR / settings.model_path,
+    candidates = []
+    configured = Path(settings.model_path)
+    if configured.is_absolute():
+        candidates.append(configured)
+    else:
+        candidates.append(BASE_DIR / settings.model_path)
+
+    candidates.extend([
         Path("/app/models/efficientnet_b0_skin_concerns.pth"),
         BASE_DIR / "models" / "efficientnet_b0_skin_concerns.pth",
         BASE_DIR / "training" / "models" / "efficientnet_b0_skin_concerns.pth",
-    ]
+    ])
 
     for candidate in candidates:
         if candidate.exists() and candidate.is_file():
-            actual_checksum = compute_sha256(candidate)
-            if actual_checksum.lower() == MODEL_CHECKSUM.lower():
-                logger.info(f"Loaded verified EfficientNet-B0 model artifact from: {candidate} (SHA-256 match)")
+            actual_checksum = compute_sha256(candidate).lower()
+            if actual_checksum == expected_checksum:
+                logger.info(f"Loaded verified EfficientNet-B0 model artifact from: {candidate} (SHA-256 verified)")
+                return candidate
             else:
-                logger.warning(
-                    f"Model artifact at {candidate} has hash {actual_checksum[:12]}... (expected {MODEL_CHECKSUM[:12]}...)"
+                raise RuntimeError(
+                    f"CRITICAL INTEGRITY FAILURE: EfficientNet-B0 model artifact at '{candidate}' "
+                    f"failed SHA-256 checksum verification. Expected {expected_checksum}, "
+                    f"got {actual_checksum}. Startup aborted to prevent unverified model execution."
                 )
-            return candidate
 
     raise FileNotFoundError(
         f"CRITICAL: EfficientNet-B0 model artifact not found. Checked: {[str(c) for c in candidates]}. "
@@ -98,7 +107,10 @@ def get_model_metadata() -> Dict[str, Any]:
         ),
         "region_level_note": (
             "Regional facial crops represent prototype visual localization inference, "
-            "not independently validated regional clinical performance."
+            "not independently validated per-region performance."
+        ),
+        "skin_type_note": (
+            "Skin-type classification is unavailable because accurate sebum and hydration "
+            "metrics require biophysical contact probes (Sebumeter/Corneometer) not derivable from 2D photos."
         ),
     }
-

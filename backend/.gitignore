@@ -38,6 +38,7 @@ dataset_backup/
 *.pt
 *.onnx
 *.bin
+!models/efficientnet_b0_skin_concerns.pth
 
 # User Private Uploads (Biometric Facial Photos)
 uploads/

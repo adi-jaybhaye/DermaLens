@@ -133,3 +133,4 @@ See [backend/AZURE_DEPLOYMENT.md](file:///backend/AZURE_DEPLOYMENT.md) for step-
 ## License & Safety Disclaimer
 
 **Educational & Wellness Purpose Only:** DermaLens is an experimental, non-clinical skin wellness evaluation tool. It does not provide medical diagnoses, treatment plans, or clinical prescriptions. Users experiencing persistent, painful, rapidly changing, or bleeding skin lesions should promptly consult a board-certified dermatologist or healthcare professional.
+
