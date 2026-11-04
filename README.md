@@ -79,7 +79,7 @@ DermaLens predicts visible surface patterns across 8 distinct skin concerns:
 │   │   └── utils/                 # Rate limiting, security helpers
 │   ├── frontend/                  # React 19 + TypeScript + Vite + PWA
 │   ├── models/                    # EfficientNet-B0 checkpoint & MediaPipe task file
-│   ├── tests/                     # 45 automated pytest tests
+│   ├── tests/                     # 51 automated pytest tests (100% passing)
 │   ├── Dockerfile                 # Production multi-stage Docker build
 │   ├── requirements.txt           # Python dependencies
 │   └── AZURE_DEPLOYMENT.md        # Comprehensive Azure deployment guide
@@ -115,7 +115,7 @@ npm run dev
 cd backend
 .\venv\Scripts\pytest -o pythonpath=. tests/ -v
 ```
-All 45 automated tests pass with 100% success rate.
+All 51 automated tests pass with 100% success rate.
 
 ---
 

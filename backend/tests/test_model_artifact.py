@@ -49,3 +49,4 @@ def test_model_artifact_missing_fails(monkeypatch, tmp_path):
         resolve_model_artifact_path()
 
     assert "EfficientNet-B0 model artifact not found" in str(exc_info.value)
+

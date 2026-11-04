@@ -76,7 +76,17 @@ def create_assessment(data: AssessmentCreate, user_id: str = None) -> str:
 
 
 def abandon_assessment(assessment_id: str, user_id: Optional[str] = None) -> bool:
-    """Mark an incomplete assessment as abandoned and purge partial image artifacts."""
+    """Mark an incomplete assessment as abandoned and purge partial image artifacts.
+
+    Fail-Safe Storage Abandonment Rule:
+    - If storage cleanup fails for ANY biometric image artifact:
+      DO NOT delete image records from assessment_images collection.
+      DO NOT clear image references from session document.
+      Set status = cleanup_pending, store failed_storage_paths and cleanup_error.
+      Log critical cleanup error and return False.
+    - Image records are deleted and session is marked 'abandoned' ONLY after
+      all physical/cloud image storage artifacts are confirmed deleted.
+    """
     try:
         object_id = ObjectId(assessment_id)
     except Exception:
@@ -94,7 +104,30 @@ def abandon_assessment(assessment_id: str, user_id: Optional[str] = None) -> boo
         return False
 
     image_records = list(database.assessment_images.find({"assessment_id": object_id}))
-    storage_service.delete_assessment_files(existing, image_records)
+    storage_report = storage_service.delete_assessment_files(existing, image_records)
+
+    # Storage Deletion Integrity Gate for Abandonment
+    if not storage_report.get("success", False):
+        failed_paths = storage_report.get("failed_paths", [])
+        import logging
+        logging.getLogger(__name__).critical(
+            f"Storage cleanup failed during abandonment of assessment {assessment_id}. "
+            f"Failed paths: {failed_paths}. Retaining image metadata to prevent orphaned biometric data."
+        )
+        database.assessment_sessions.update_one(
+            {"_id": object_id},
+            {
+                "$set": {
+                    "status": "cleanup_pending",
+                    "cleanup_error": f"Failed to delete {len(failed_paths)} image storage artifact(s) on abandonment",
+                    "failed_storage_paths": failed_paths,
+                    "updated_at": datetime.now(timezone.utc),
+                }
+            },
+        )
+        return False
+
+    # Storage cleanup succeeded: purge image records, clear image refs, mark abandoned
     database.assessment_images.delete_many({"assessment_id": object_id})
 
     now = datetime.now(timezone.utc)

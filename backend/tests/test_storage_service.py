@@ -107,3 +107,120 @@ def test_delete_assessment_storage_failure_retains_db_record(monkeypatch):
 
     # 5. Clean up test document safely
     database.assessment_sessions.delete_one({"_id": ObjectId(assessment_id)})
+
+
+def test_abandon_assessment_storage_failure_retains_metadata(monkeypatch):
+    """Verify that if storage deletion fails during abandonment:
+    - abandon_assessment() returns False
+    - Assessment document is retained and set to 'cleanup_pending'
+    - Image records in assessment_images collection are NOT wiped
+    """
+    from app.services.assessment_service import create_assessment, abandon_assessment
+    from app.services.image_service import create_image_record
+    from app.schemas.assessment import AssessmentCreate
+    from app.config.database import database
+    from app.services.storage_service import storage_service
+    from bson import ObjectId
+
+    # 1. Create an assessment
+    data = AssessmentCreate(views=["front"], capture_type="upload")
+    assessment_id = create_assessment(data, user_id="test_abandon_user")
+    assert assessment_id is not None
+
+    # 2. Add an image record
+    create_image_record(
+        assessment_id=assessment_id,
+        view="front",
+        filename="test_abandon.jpg",
+        content_type="image/jpeg",
+        file_size=1024,
+        file_path="uploads/test_abandon.jpg",
+    )
+
+    # 3. Mock storage failure
+    def mock_delete_files(*args, **kwargs):
+        return {
+            "total_expected": 1,
+            "deleted_count": 0,
+            "failed_paths": ["uploads/test_abandon.jpg"],
+            "success": False,
+        }
+
+    monkeypatch.setattr(storage_service, "delete_assessment_files", mock_delete_files)
+
+    # 4. Attempt abandon — MUST return False
+    res = abandon_assessment(assessment_id, user_id="test_abandon_user")
+    assert res is False
+
+    # 5. Verify database records are retained
+    session = database.assessment_sessions.find_one({"_id": ObjectId(assessment_id)})
+    assert session is not None
+    assert session["status"] == "cleanup_pending"
+    assert "uploads/test_abandon.jpg" in session["failed_storage_paths"]
+
+    # Image metadata must NOT be deleted
+    image_record = database.assessment_images.find_one({"assessment_id": ObjectId(assessment_id)})
+    assert image_record is not None, "Image records must not be deleted when storage cleanup fails during abandonment!"
+
+    # Clean up
+    database.assessment_images.delete_many({"assessment_id": ObjectId(assessment_id)})
+    database.assessment_sessions.delete_one({"_id": ObjectId(assessment_id)})
+
+
+def test_account_deletion_storage_failure_blocks_user_deletion(monkeypatch):
+    """Verify that if any assessment storage cleanup fails during account deletion:
+    - delete_user_account() returns success=False
+    - User document is NOT deleted
+    - Assessment document is NOT deleted and marked 'cleanup_pending'
+    - No false 'permanently deleted' response is returned
+    """
+    from app.services.auth_service import register_user, delete_user_account
+    from app.services.assessment_service import create_assessment
+    from app.schemas.user import UserCreate
+    from app.schemas.assessment import AssessmentCreate
+    from app.config.database import database
+    from app.services.storage_service import storage_service
+    from bson import ObjectId
+    import uuid
+
+    email = f"storage_fail_{uuid.uuid4().hex[:8]}@example.com"
+    reg = register_user(UserCreate(email=email, password="ValidPassword123!", full_name="Fail User"))
+    assert reg["success"] is True
+    user_id = reg["user"]["id"]
+
+    # Create assessment for this user
+    data = AssessmentCreate(views=["front"], capture_type="upload")
+    assessment_id = create_assessment(data, user_id=user_id)
+    assert assessment_id is not None
+
+    # Mock storage failure during deletion
+    def mock_delete_files(*args, **kwargs):
+        return {
+            "total_expected": 1,
+            "deleted_count": 0,
+            "failed_paths": ["azure://assessment-images/orphaned_photo.jpg"],
+            "success": False,
+        }
+
+    monkeypatch.setattr(storage_service, "delete_assessment_files", mock_delete_files)
+
+    # Attempt account deletion — MUST fail safely
+    result = delete_user_account(user_id)
+    assert result["success"] is False
+    assert "Biometric data cleanup failed" in result["reason"]
+    assert assessment_id in result["failed_assessments"]
+
+    # Verify user STILL exists in database
+    user_doc = database.users.find_one({"_id": ObjectId(user_id)})
+    assert user_doc is not None, "User account must NOT be deleted if biometric storage cleanup fails!"
+
+    # Verify assessment STILL exists in database and is marked cleanup_pending
+    assessment_doc = database.assessment_sessions.find_one({"_id": ObjectId(assessment_id)})
+    assert assessment_doc is not None, "Assessment record must NOT be deleted if storage cleanup fails!"
+    assert assessment_doc["status"] == "cleanup_pending"
+    assert "azure://assessment-images/orphaned_photo.jpg" in assessment_doc["failed_storage_paths"]
+
+    # Clean up test artifacts safely
+    monkeypatch.undo()
+    database.assessment_sessions.delete_one({"_id": ObjectId(assessment_id)})
+    database.users.delete_one({"_id": ObjectId(user_id)})

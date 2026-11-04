@@ -226,6 +226,12 @@ def abandon_assessment_route(
 
     success = abandon_assessment(assessment_id, user_id=current_user["id"])
     if not success:
+        session = database.assessment_sessions.find_one({"_id": ObjectId(assessment_id)})
+        if session and session.get("status") == "cleanup_pending":
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Storage cleanup failed during abandonment. Assessment retained in cleanup-pending state: {session.get('cleanup_error')}",
+            )
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Could not abandon assessment. Ensure the assessment exists and is not already completed.",

@@ -114,3 +114,17 @@ jobs:
       - name: Build and validate container image
         run: |
           docker build -t dermalens-api:test -f backend/Dockerfile backend/
+          docker run --rm dermalens-api:test python -c "
+          import hashlib, os, sys
+          path = '/app/models/efficientnet_b0_skin_concerns.pth'
+          expected = 'ba123334b476a24b710a78000a70b1d6dcc44ee100664673d6e61ed3d0827412'
+          if not os.path.exists(path):
+              print(f'CRITICAL: Model file missing inside container: {path}')
+              sys.exit(1)
+          with open(path, 'rb') as f:
+              actual = hashlib.sha256(f.read()).hexdigest().lower()
+          if actual != expected:
+              print(f'CRITICAL: Checksum inside container mismatch: {actual}')
+              sys.exit(1)
+          print(f'SUCCESS: Verified model artifact inside container ({os.path.getsize(path):,} bytes, SHA-256 verified).')
+          "

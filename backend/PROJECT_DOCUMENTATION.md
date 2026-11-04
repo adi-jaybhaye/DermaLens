@@ -147,4 +147,4 @@ npm run dev
 cd backend
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
-All 45 comprehensive tests across endpoints, authorization isolation, upload security, quality gates, face detection, ML inference, abstention, atomic sequence numbering, storage service failfast, private cache-control, and physical storage cleanup pass with 100% success.
+All 51 comprehensive tests across endpoints, authorization isolation, upload security, quality gates, face detection, ML inference, abstention, atomic sequence numbering, storage service failfast, fail-safe biometric account deletion, abandonment cleanup, private cache-control, and physical storage cleanup pass with 100% success.

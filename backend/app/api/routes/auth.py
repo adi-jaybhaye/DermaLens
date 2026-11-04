@@ -127,11 +127,11 @@ def get_profile(current_user: dict = Depends(get_current_user)):
 @router.delete("/auth/me")
 def delete_account(response: Response, current_user: dict = Depends(get_current_user)):
     """Permanently delete user account, clear session cookie, and wipe all associated biometric assessment data."""
-    _clear_auth_cookie(response)
-    success = delete_user_account(current_user["id"])
-    if not success:
+    result = delete_user_account(current_user["id"])
+    if not result.get("success", False):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to completely purge user account",
+            detail=result.get("reason", "Failed to completely purge user account and biometric data"),
         )
+    _clear_auth_cookie(response)
     return {"message": "Account and all associated biometric records permanently deleted"}

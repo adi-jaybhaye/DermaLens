@@ -171,7 +171,18 @@ def get_user_by_id(user_id: str) -> Optional[Dict[str, Any]]:
 
 
 def delete_user_account(user_id: str) -> Dict[str, Any]:
-    """Permanently delete user account and wipe all associated assessments and image files."""
+    """Permanently delete user account and wipe all associated assessments and image files.
+
+    Fail-Safe Biometric Account Deletion Rule:
+    - Calls delete_assessment() for each assessment belonging to this user.
+    - If ANY assessment storage cleanup fails:
+      DO NOT delete the user account record.
+      DO NOT claim permanent deletion succeeded.
+      Retain user account and the affected assessment(s) in cleanup_pending state.
+      Return controlled failure response to allow cleanup retry.
+    - User record is deleted ONLY after ALL associated assessments and biometric
+      storage artifacts have been confirmed purged.
+    """
     if not ObjectId.is_valid(user_id):
         return {"success": False, "reason": "Invalid user ID"}
 
@@ -183,14 +194,34 @@ def delete_user_account(user_id: str) -> Dict[str, Any]:
 
         from app.services.assessment_service import delete_assessment
 
-        # Find and delete all assessments belonging to this user (unlinks physical files and DB records)
+        # Find all assessments belonging to this user
         assessments = list(database.assessment_sessions.find({"user_id": str(user_id)}))
+        failed_assessment_ids = []
         for assessment in assessments:
             assessment_id = str(assessment["_id"])
-            delete_assessment(assessment_id)
+            success = delete_assessment(assessment_id, user_id=str(user_id))
+            if not success:
+                failed_assessment_ids.append(assessment_id)
 
-        # Delete user record
-        database.users.delete_one({"_id": user_obj_id})
+        if failed_assessment_ids:
+            logger.critical(
+                f"Account deletion blocked for user {user_id}: "
+                f"Biometric storage cleanup failed for assessment(s) {failed_assessment_ids}. "
+                "Retaining user account and assessment records to prevent orphaned biometric data."
+            )
+            return {
+                "success": False,
+                "reason": (
+                    f"Biometric data cleanup failed for {len(failed_assessment_ids)} assessment(s). "
+                    "User account retained to prevent orphaned records. Retry deletion after resolving storage issues."
+                ),
+                "failed_assessments": failed_assessment_ids,
+            }
+
+        # Delete user record ONLY after all assessments and storage artifacts are confirmed deleted
+        result = database.users.delete_one({"_id": user_obj_id})
+        if result.deleted_count == 0:
+            return {"success": False, "reason": "Failed to delete user record from database"}
 
         return {"success": True, "message": "Account and all associated biometric data permanently deleted"}
     except PyMongoError as e:
