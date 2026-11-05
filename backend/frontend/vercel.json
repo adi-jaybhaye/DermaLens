@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "https://dermalens-backend.azurewebsites.net/api/v1/:path*"
+      "destination": "https://dermalens-backend-dbajcgayhhg0gnb8.centralindia-01.azurewebsites.net/api/v1/:path*"
     },
     {
       "source": "/(.*)",
